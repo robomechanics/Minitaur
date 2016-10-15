@@ -10,7 +10,7 @@
 #include <Arduino.h>
 
 // Needs to be double buffered for alignment
-#define BULKSERIAL_MAX_RX_SIZE 64
+#define BULKSERIAL_MAX_RX_SIZE 100
 
 /**
  * @brief Presets for using BulkSerial
