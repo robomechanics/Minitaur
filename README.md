@@ -1,5 +1,7 @@
 ### Installation
 
+You can choose one of the following:
+
 #### Clone
 
 * clone this repository to your computer (using SourceTree or whatever)
