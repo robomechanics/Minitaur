@@ -14,4 +14,4 @@ You can choose one of the following:
 
 * download: https://gitlab.com/ghostrobotics/mainboard-libraries/repository/archive.zip?ref=master
 * unzip to your Arduino sketchbook
-* e.g. if your sketchbook is in `/Users/me/Documents/Arduino`, then `/Users/me/Arduino/libraries/MotorController/Motor.h` must be a valid path
+* e.g. if your sketchbook is in `/Users/me/Arduino`, then `/Users/me/Arduino/libraries/MotorController/Motor.h` must be a valid path
