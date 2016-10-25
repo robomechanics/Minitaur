@@ -97,3 +97,21 @@ void MinitaurLeg::getToeForce(float& ur, float& uth) {
   ur = dummy * (u0+u1);
   uth = u0-u1;
 }
+
+void MinitaurLeg::getToeForceXZ(float pitch, bool bRight, float& ux, float& uz) {
+  static float ur, uth, r, th;
+  getToeForce(ur, uth);
+  // left side reverse
+  if (!bRight) {
+    ur = -ur;
+    uth = -uth;
+  }
+  // -ve ur push up, -ve uth pull forward. use body pitch to get vertical force
+  th = getPosition(ANGLE) + pitch;
+  if (MinitaurLeg::useLengths)
+    r = getPosition(EXTENSION);
+  else
+    r = FKext(getPosition(EXTENSION));
+  ux = ur*arm_sin_f32(th) + uth*arm_cos_f32(th)/r;
+  uz = -ur*arm_cos_f32(th) + uth*arm_sin_f32(th)/r;
+}

@@ -61,6 +61,17 @@ public:
    */
   void getToeForce(float& ur, float& uth);
 
+  /**
+   * @brief Get toe forces in N in absolute coords
+   * @details The lengths MinitaurLeg::l1 and MinitaurLeg::l2 need to be correct, and also Motor::setTorqueEstParams needs to have be called for this to work.
+   * 
+   * @param bodyPitch pitch such that > 0 when leaned forward
+   * @param bRight true if this is a right leg
+   * @param ux Returns horizontal force in N. It is >0 if leg is pushed "back"
+   * @param uz Returns vertical force in N. It is >0 if leg is pushed "up"
+   */
+  void getToeForceXZ(float bodyPitch, bool bRight, float& ux, float& uz);
+
 protected:
   // this does the full FK irrespective of if useLengths is false
   float FKext(float meanAng);
