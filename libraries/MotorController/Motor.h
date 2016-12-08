@@ -117,7 +117,7 @@ public:
    * @details Useful to record input when getPosition() is used
    * @return Commanded PWM in [-1, 1]
    */
-  float getOpenLoop() { return correctedVal; }
+  float getOpenLoop() { return correctedVal * direction * driverDirection; }
 
   /**
    * @brief Details for torque estimate in getTorque(). Not used elsewhere.
