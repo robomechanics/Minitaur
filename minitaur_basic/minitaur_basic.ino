@@ -22,15 +22,14 @@
 // Change the upload port (in Arduino or Makefile)
 
 Peripheral *remote = &remoteRC;// remoteRC / remoteComputer
-Peripheral *imu = &imuMPU6000;// imuVN100 / imuMPU6000
+Peripheral *imu = &imuVN100;// imuVN100 / imuMPU6000
 // ====== To save compile time if not using MPU6000, comment next two lines =====
 #include <MPU6000.h>
 #include <Eigen.h>
 
 // This must be set per robot
-// const float motZeros[8] = {5.562, 3.362, 1.186, 4.745, 3.035, 2.663, 1.760, 3.682};//Penn Mini
-const float motZeros[8] = {0.631, 4.076, 1.852, 0.644, 3.408, 1.169, 0.523, 6.252};//Aaron Mini
-// const float motZeros[8] = {1.06, 0.36, 2.00, 0.58, 1.76, 1.00, 5.58, 2.09};//Penn Mega
+const float motZeros[8] = {2.041, 1.616, 5.522, 2.484, 1.712, 5.356, 0.652, 2.017};//G Mini
+// const float motZeros[8] = {0.631, 4.076, 1.852, 0.644, 3.408, 1.169, 0.523, 6.252};//Aaron Mini
 
 // Behavior array: add behaviors here. First one in the array is the starting behavior.
 // Make sure the #include is in Remote.h

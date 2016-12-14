@@ -187,21 +187,22 @@ void halUpdate() {
 #endif//if USE_BUS
 
   // SAFETY CHECK
-  for (int i=0; i<4; ++i) {
+  for (int i=0; i<8; ++i) {
     // legs get stuck
-    float ri = leg[i].getPosition(EXTENSION);
-    if (ri < 0.1 || ri > 3.05) {
+    float val = M[i].getOpenLoop();
+    if (fabsf(val) > 0.5) {
       legStuckTimer[i]++;
     } else {
       legStuckTimer[i] = 0;
     }
-    // if stuck for 0.5 seconds, disable
-    if (legStuckTimer[i] > CONTROL_RATE/2) {
+    // if stuck for 1 seconds, disable
+    if (legStuckTimer[i] > CONTROL_RATE) {
       enable(false);
       hbFreq = CONTROL_RATE;
       hbOnFreq = CONTROL_RATE/10;
     }
   }
+
 
   imu->updateInterrupt();
 
