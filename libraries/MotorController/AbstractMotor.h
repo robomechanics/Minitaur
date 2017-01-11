@@ -141,10 +141,10 @@ public:
 
     for (int i=0; i<N; ++i) {
       // Velocity calculation should happen independent of mode
-      if (bAngle[i])
-        posCtrlVal[i] = pd[i].update(fmodf_mpi_pi(pos[i] - setpoint[i]));
-      else
-        posCtrlVal[i] = pd[i].update(pos[i] - setpoint[i]);
+      // if (bAngle[i])
+      //   posCtrlVal[i] = pd[i].update(fmodf_mpi_pi(pos[i] - setpoint[i]));
+      // else
+        posCtrlVal[i] = pd[i].update(pos[i], setpoint[i]);
 
       // In position mode, update the motor command
       if (mode[i] == POSITION_MODE)
