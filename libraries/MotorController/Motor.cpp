@@ -106,8 +106,9 @@ float Motor::update() {
   float pos = getPosition();
 
   // Velocity calculation should happen independent of mode
-  float error = (bContinuousRotation) ? fmodf_mpi_pi(pos - setpoint) : (pos - setpoint);
-  float posCtrlVal = pd.update(error);
+  // float error = (bContinuousRotation) ? fmodf_mpi_pi(pos - setpoint) : (pos - setpoint);
+  // FIXME bContinuousRotation
+  float posCtrlVal = pd.update(pos, setpoint);
 
   // In position mode, update the motor command
   if (mode == POSITION_MODE)
