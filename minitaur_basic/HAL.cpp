@@ -65,7 +65,7 @@ MinitaurLeg(&M[6], &M[7])};//3
 // MinitaurLeg(&M[7], &M[6])};//3
 
 // Safety check
-volatile uint32_t legStuckTimer[4];
+volatile uint32_t legStuckTimer[8];
 
 void enable(bool flag) {
   for (int i=0; i<4; ++i)

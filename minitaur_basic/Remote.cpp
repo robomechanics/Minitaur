@@ -55,8 +55,8 @@ void RemoteRC::updateInterrupt() {
   // speedDes = speedDesF.update(0.5 * rvstick);
   // yawDes = yawDesF.update(0.1 * rhstick);
   // LOW SENSITIVITY
-  speedDes = speedDesF.update(0.25 * rvstick);
-  yawDes = yawDesF.update(0.1 * rhstick);
+  speedDes = speedDesF.update(0.2 * rvstick);
+  yawDes = yawDesF.update(0.05 * rhstick);
   latDes = 0;//lhstick;
   // end behavior
   if (behavior->running() && !throttle) {

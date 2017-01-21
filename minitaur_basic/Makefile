@@ -1,7 +1,7 @@
 
 # ARDUINO UPLOAD COMMENT OUT IF USING MAKE BUILD
 all:
-	arduino_debug --verbose-upload --upload --board koduino:stm32:f303v:hse=8m,bootloader=stm32loader --port COM9 "C:\Users\avik\Documents\mainboard-libraries\minitaur_basic\minitaur_basic.ino"
+	arduino_debug --verbose-upload --upload --board koduino:stm32:f303v:hse=8m,bootloader=stm32loader --port COM11 "C:\Users\avik\Documents\mainboard-libraries\minitaur_basic\minitaur_basic.ino"
 
 # MAKEFILE UPLOAD
 # # mblc0.5
