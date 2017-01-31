@@ -12,6 +12,9 @@ float MinitaurLeg::l2 = 0.2;
 bool MinitaurLeg::useLengths = false;
 
 MinitaurLeg::MinitaurLeg(Motor *M0, Motor *M1) {
+  pd[EXTENSION].init(Motor::velSmooth, Motor::updateRate, DLPF_ANGRATE);
+  pd[ANGLE].init(Motor::velSmooth, Motor::updateRate, DLPF_ANGRATE);
+
   motors[0] = M0;
   motors[1] = M1;
 
