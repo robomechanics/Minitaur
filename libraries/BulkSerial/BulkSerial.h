@@ -35,6 +35,7 @@ extern const BulkSerialSettings MBLC_RPI;
 class BulkSerial {
 public:
   const BulkSerialSettings& bss;
+  bool bTxEvenParity;
   uint16_t sizeTx, sizeRx;
   bool enabled;
 
@@ -42,7 +43,7 @@ public:
    * @brief Constructor needs a BulkSerialSettings instance.
    * @details Use predefined `MBLC_OPENLOG` or `MBLC_RPI` for now
    */
-  BulkSerial(const BulkSerialSettings& bss) : bss(bss), sizeTx(0), sizeRx(0), enabled(false), curLocalBufIndex(0) {}
+  BulkSerial(const BulkSerialSettings& bss) : bss(bss), bTxEvenParity(false), sizeTx(0), sizeRx(0), enabled(false), curLocalBufIndex(0) {}
 
   /**
    * @brief Call this in setup 

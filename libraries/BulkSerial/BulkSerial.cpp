@@ -19,8 +19,14 @@ void BulkSerial::begin(uint32_t baud, uint16_t sizeTx, void *bufTx, uint16_t siz
 
   USART_InitTypeDef USART_InitStructure;
   USART_InitStructure.USART_BaudRate = baud;
-  USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-  USART_InitStructure.USART_Parity = USART_Parity_No;
+  if (bTxEvenParity) {
+    USART_InitStructure.USART_WordLength = USART_WordLength_9b;
+    USART_InitStructure.USART_Parity = USART_Parity_Even;
+  } else {
+    USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+    USART_InitStructure.USART_Parity = USART_Parity_No;
+  }
+
   USART_InitStructure.USART_StopBits = USART_StopBits_1;
   USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
   USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
