@@ -29,8 +29,7 @@ Peripheral *imu = &imuVN100;// imuVN100 / imuMPU6000
 #include <Eigen.h>
 
 // This must be set per robot
-const float motZeros[8] = {3.408, 6.238, 4.169, 0.227, 3.744, 3.147, 3.457, 3.596};//G Mini
-// const float motZeros[8] = {0.631, 4.076, 1.852, 0.644, 3.408, 1.169, 0.523, 6.252};//Aaron Mini
+const float motZeros[8] = {0.379, 5.197, 3.540, 5.827, 5.669, 4.696, 1.183, 6.087};//Penn Mini
 
 // Behavior array: add behaviors here. First one in the array is the starting behavior.
 // Make sure the #include is in Remote.h
@@ -40,6 +39,10 @@ Behavior *behaviorArray[NUM_BEHAVIORS] = {&bound};
 // ======================================================================
 
 volatile uint32_t controlTime = 0;
+// For "soft start"
+bool bPwrOnStateObtained = false;
+uint32_t tPwrOnAnim0 = 0, tPwrOnAnimEnd = 3000;
+float pwrOnExt[4], pwrOnAng[4];
 
 void debug() {
   Serial1 << X.t << "\t";
@@ -93,7 +96,39 @@ void controlLoop() {
   // }
 
   // BEHAVIOR
-  behavior->update();
+  // "soft start"
+  if ((behavior == &bound) && millis() < tPwrOnAnimEnd) {
+    if (!bPwrOnStateObtained) {
+      for (int i=0; i<4; ++i) {
+        pwrOnAng[i] = leg[i].getPosition(ANGLE);
+        pwrOnExt[i] = leg[i].getPosition(EXTENSION);
+      }
+      bPwrOnStateObtained = true;
+      tPwrOnAnim0 = millis();
+    }
+    for (int i=0; i<4; ++i) {
+      bool bFront = (i==0) || (i==2);
+      leg[i].setGain(EXTENSION, 0.2);
+      leg[i].setGain(ANGLE, 0.4);
+      if (millis() < 2000)
+        leg[i].setGain(ANGLE, 0.05);
+      // these two depend on the behavior: could make the behavior return these
+      // for now these are reasonable for bound
+      float behavExtDes = 1.5;//(behavior == &bound) ? 1.5 : 1.0;
+      float behavAngDes = 0.0;
+      leg[i].setPosition(EXTENSION, map(constrain(millis(),0,3000),tPwrOnAnim0,3000,pwrOnExt[i],behavExtDes));
+      float ang0 = pwrOnAng[i];
+      // avoid intersecting the body
+      if (bFront && pwrOnAng[i] > HALF_PI)
+        ang0 -= TWO_PI;
+      else if (!bFront && pwrOnAng[i] < -HALF_PI)
+        ang0 += TWO_PI;
+      leg[i].setPosition(ANGLE, map(constrain(millis(),0,tPwrOnAnimEnd),tPwrOnAnim0,tPwrOnAnimEnd,ang0,behavAngDes));
+    }
+  }
+  else {
+    behavior->update();
+  }
 
   // Remote: set parameters, stop behavior
   remote->updateInterrupt();
