@@ -155,8 +155,11 @@ public:
    * @param yawd in rad/s
    * @param pitchd in rad/s
    * @param rolld in rad/s
+   * @param ax true inertical acc in m/s^2
+   * @param ay true inertical acc in m/s^2
+   * @param az true inertical acc in m/s^2
    */
-  void get(float& yaw, float& pitch, float& roll, float& yawd, float& pitchd, float& rolld) {
+  void get(float& yaw, float& pitch, float& roll, float& yawd, float& pitchd, float& rolld, float& ax, float& ay, float& az) {
     // VN100: 27 (48bytes) = YPR,MAG,ACC,ANGRATES
     // VN100: 240 (36bytes) = YPR,TRUE_INERTIAL_ACC,ANGRATES
 
@@ -206,9 +209,28 @@ public:
     yaw = radians(dat[0]);
     pitch = radians(dat[1]);
     roll = radians(dat[2]);
+    ax = dat[3];
+    ay = dat[4];
+    az = dat[5];
     yawd = dat[8];
     pitchd = dat[7];
     rolld = dat[6];
+  }
+
+  /**
+   * @brief Retrieves angles and angular rates
+   * @details This function blocks for a few hundred microseconds.
+   * 
+   * @param yaw in radians
+   * @param pitch in radians
+   * @param roll in radians
+   * @param yawd in rad/s
+   * @param pitchd in rad/s
+   * @param rolld in rad/s
+   */
+  void get(float& yaw, float& pitch, float& roll, float& yawd, float& pitchd, float& rolld) {
+    float ax, ay, az;// dummies
+    get(yaw, pitch, roll, yawd, pitchd, rolld, ax, ay, az);
   }
 };
 
