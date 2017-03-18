@@ -24,6 +24,7 @@ struct BulkSerialSettings {
 };
 extern const BulkSerialSettings MBLC_OPENLOG;
 extern const BulkSerialSettings MBLC_RPI;
+extern const BulkSerialSettings MBLC_PROGPORT;
 
 /**
  * @brief Fixed length bulk serial data transfers using DMA

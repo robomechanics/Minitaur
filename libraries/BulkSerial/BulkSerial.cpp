@@ -8,6 +8,7 @@
 
 const BulkSerialSettings MBLC_OPENLOG = {PB10, PB11, USART3, DMA1_Channel2, DMA1_Channel3, DMA1_FLAG_TC3};
 const BulkSerialSettings MBLC_RPI = {PA2, PA3, USART2, DMA1_Channel7, DMA1_Channel6, DMA1_FLAG_TC6};
+const BulkSerialSettings MBLC_PROGPORT = {PA9, PA10, USART1, DMA1_Channel4, DMA1_Channel5, DMA1_FLAG_TC5};
 
 const uint8_t OPENLOG_ALIGNMENT_WORD[] = {0xaa, 0xbb};
 
