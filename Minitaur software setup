@@ -1,1 +1,13 @@
+These steps will set up your computer to compile and upload code onto the Minitaur. For now, this must be done in Windows.
 
+1. Follow instructions 2.1.1 - 2.1.3 at https://gitlab.com/ghostrobotics/docs/wikis/getting-started. Note that this requires downloading the correct version of Arduino (1.6.1), as well as SourceTree (a git client). Links to those downloads are included in the above link. Also note that there are two different libraries - koduino (basic microcontroller extensions) and mainboard-libraries (Minitaur specific). You will need a GitLab account as well as an email to Avik (avik@ghostrobotics.io) to gain access to mainboard-libraries. Also for 2.1.2.4,  you will need to create an empty folder titled "koduino" in the ~/Documents/arduino-1.6.1/hardware folder before you can select it as a destination path.
+
+2. Follow 2.2.1 of the above link. This walk you through downloading Python 2.7 via Anaconda (a package manager). Note that the link in step 2.2.1.1 will bring you to a page titled OpenLog Class Reference - you only need to find the "Using Python" header and follow steps 1-6. Make sure you still complete 2.2.1.2 and 2.2.1.3 though.
+
+3. Follow the section titled "Using Arduino IDE" within instruction 2.2. Only do steps 1-7. For step 3, do not set Bootloader to Serial (in the previous step you should have set it to Serial (stm32loader) which is correct ).
+
+4. Open minitaur_basic.ino, which is located in ~/mainboard-libraries/minitaur_basic. Click the checkmark in the upper left to compile, and the arrow to compile and upload to the Minitaur.
+
+Notes:
+- Make sure the motor zeros declared in minitaur_basic.ino are correct for our lab (const float motZeros[8] = {0.631, 4.076, 1.852, 3.414, 1.817, 1.169, 1.078, 6.252};//Aaron Mini 3/21/17) 
+- Make sure the Minitaur is disconnected from your PC before you turn the power on, otherwise the motors will be disabled due to the safety check in HAL.cpp.
