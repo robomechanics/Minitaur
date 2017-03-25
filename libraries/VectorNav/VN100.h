@@ -23,6 +23,8 @@ class VN100 {
   SPIClass& theSPI;
   uint8_t csPin;
 public:
+  // response header for SPI read/write commands
+  uint8_t resphead[4];
   // VN100240 vn100240pkt, vn100240pkt2;
 
   /**
@@ -54,6 +56,9 @@ public:
     // VPE mag config (36) set all to 0 (don't trust magnetometer)
     float magConfig[9] = {0,0,0, 0,0,0, 0,0,0};
     writeReg(36, 36, (const uint8_t *)magConfig);
+
+    // Test read and request (avoid wait)
+    // readReg(240, 0, NULL, 1);
 
     // Use DMA
     // RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
@@ -99,33 +104,56 @@ public:
    * @param reg Register ID
    * @param N Size of payload packet (in bytes)
    * @param buf Pre-allocated buffer to place payload packet in
+   * @param mode 0 means request and read, 1 means request and return, 2 means read and then request
    * @return Error ID
    */
-  uint8_t readReg(uint8_t reg, int N, uint8_t *buf) {
-    digitalWrite(csPin, LOW);
-    // delayMicroseconds(1);
-    theSPI.transfer(0x01);
-    theSPI.transfer(reg);
-    theSPI.transfer(0x00);
-    theSPI.transfer(0x00);
-    // delayMicroseconds(1);
-    digitalWrite(csPin, HIGH);
-    delayMicroseconds(50);
-
-    digitalWrite(csPin, LOW);
-    // delayMicroseconds(1);
-    uint8_t c, errId;
-    for (int i=0; i<N+4; ++i) {
-      c = theSPI.transfer(0x00);
-      if (i==3)
-        errId = c;
-      else if (i >= 4) {
-        buf[i-4] = c;
-      }
+  uint8_t readReg(uint8_t reg, int N, uint8_t *buf, uint8_t mode=0) {
+    if (mode == 0 || mode == 1) {
+      // Request
+      digitalWrite(csPin, LOW);
+      // delayMicroseconds(1);
+      theSPI.transfer(0x01);
+      theSPI.transfer(reg);
+      theSPI.transfer(0x00);
+      theSPI.transfer(0x00);
+      // delayMicroseconds(1);
+      digitalWrite(csPin, HIGH);
+      if (mode == 0)
+        // need to wait before response
+        delayMicroseconds(50);
+      else if (mode == 1)
+        return 0;
     }
-    // delayMicroseconds(1);
-    digitalWrite(csPin, HIGH);
-    return errId;
+
+    if (mode == 0 || mode == 2) {
+      digitalWrite(csPin, LOW);
+      // delayMicroseconds(1);
+      uint8_t c;
+      for (int i=0; i<N+4; ++i) {
+        c = theSPI.transfer(0x00);
+        if (i<4)
+          resphead[i] = c;
+        else
+          buf[i-4] = c;
+      }
+      // delayMicroseconds(1);
+      digitalWrite(csPin, HIGH);
+      if (mode == 2) {
+        // Request again
+        delayMicroseconds(5);
+        digitalWrite(csPin, LOW);
+        // delayMicroseconds(1);
+        theSPI.transfer(0x01);
+        theSPI.transfer(reg);
+        theSPI.transfer(0x00);
+        theSPI.transfer(0x00);
+        // delayMicroseconds(1);
+        digitalWrite(csPin, HIGH);
+      }
+      return resphead[3];
+    }
+    // should never get here since mode is 0, 1, or 2
+    return 0;
   }
   /**
    * @brief Write a register
@@ -153,15 +181,12 @@ public:
     // "it is sufficient to just clock in only four bytes
     // on the response packet to verify that the write register took effect, 
     // which is indicated by a zero error code."
-    uint8_t c, errId;
     for (int i=0; i<4; ++i) {
-      c = theSPI.transfer(0x00);
-      if (i==3)
-        errId = c;
+      resphead[i] = theSPI.transfer(0x00);
     }
     // delayMicroseconds(1);
     digitalWrite(csPin, HIGH);
-    return errId;
+    return resphead[3];
   }
 
 
@@ -236,6 +261,8 @@ public:
     // time polling: 350us @ clock div 4, 270us @ clock div 2
     static float dat[9];
     uint8_t errId = readReg(240, 36, (uint8_t *)dat);
+    // test read and request
+    // uint8_t errId = readReg(240, 36, (uint8_t *)dat, 2);
     // problems with reading?
     yaw = radians(dat[0]);
     pitch = radians(dat[1]);
