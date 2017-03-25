@@ -20,10 +20,10 @@ typedef struct {
  * @brief VN100 hardware interface library
  */
 class VN100 {
-public:
   SPIClass& theSPI;
   uint8_t csPin;
-  VN100240 vn100240pkt, vn100240pkt2;
+public:
+  // VN100240 vn100240pkt, vn100240pkt2;
 
   /**
    * @brief Construct with reference to which SPI
@@ -45,9 +45,15 @@ public:
     theSPI.begin();
     // APB1 on F303 has prescaler 2 => 36MHz
     // VN100 says 16MHz max SPI speed
-    theSPI.setClockDivider(SPI_CLOCK_DIV4);
+    theSPI.setClockDivider(SPI_CLOCK_DIV2);
     theSPI.setBitOrder(MSBFIRST);
     theSPI.setDataMode(SPI_MODE3);
+
+    // Initial configuration
+    // VPE config (register 35) defaults are 1,1,1,1 - OK
+    // VPE mag config (36) set all to 0 (don't trust magnetometer)
+    float magConfig[9] = {0,0,0, 0,0,0, 0,0,0};
+    writeReg(36, 36, (const uint8_t *)magConfig);
 
     // Use DMA
     // RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
@@ -87,7 +93,15 @@ public:
     // SPI_I2S_DMACmd(SPI2, SPI_I2S_DMAReq_Tx, ENABLE);
   }
 
-  void readReg(uint8_t reg, int N, uint8_t *buf) {
+  /**
+   * @brief Read a register
+   * 
+   * @param reg Register ID
+   * @param N Size of payload packet (in bytes)
+   * @param buf Pre-allocated buffer to place payload packet in
+   * @return Error ID
+   */
+  uint8_t readReg(uint8_t reg, int N, uint8_t *buf) {
     digitalWrite(csPin, LOW);
     // delayMicroseconds(1);
     theSPI.transfer(0x01);
@@ -100,20 +114,31 @@ public:
 
     digitalWrite(csPin, LOW);
     // delayMicroseconds(1);
+    uint8_t c, errId;
     for (int i=0; i<N+4; ++i) {
-      uint8_t c = theSPI.transfer(0x00);
-      // if (i==3 && c!= 0)
-      if (i >= 4) {
+      c = theSPI.transfer(0x00);
+      if (i==3)
+        errId = c;
+      else if (i >= 4) {
         buf[i-4] = c;
       }
     }
     // delayMicroseconds(1);
     digitalWrite(csPin, HIGH);
+    return errId;
   }
-  void writeReg(uint8_t reg, int N, const uint8_t *args) {
+  /**
+   * @brief Write a register
+   * 
+   * @param reg Register ID
+   * @param N Size of payload packet (in bytes)
+   * @param args Payload packet
+   * @return Error code in response packet (0 is good)
+   */
+  uint8_t writeReg(uint8_t reg, int N, const uint8_t *args) {
     digitalWrite(csPin, LOW);
     // delayMicroseconds(1);
-    theSPI.transfer(0x01);
+    theSPI.transfer(0x02);
     theSPI.transfer(reg);
     theSPI.transfer(0x00);
     theSPI.transfer(0x00);
@@ -125,16 +150,21 @@ public:
 
     digitalWrite(csPin, LOW);
     // delayMicroseconds(1);
-    for (int i=0; i<N+4; ++i) {
-      theSPI.transfer(0x00);
-      // if (i==3 && c!= 0)
-      // if (i >= 4) {
-      //   buf[i-4] = c;
-      // }
+    // "it is sufficient to just clock in only four bytes
+    // on the response packet to verify that the write register took effect, 
+    // which is indicated by a zero error code."
+    uint8_t c, errId;
+    for (int i=0; i<4; ++i) {
+      c = theSPI.transfer(0x00);
+      if (i==3)
+        errId = c;
     }
     // delayMicroseconds(1);
     digitalWrite(csPin, HIGH);
+    return errId;
   }
+
+
   // void beginRead(uint8_t reg) {
   //   digitalWrite(csPin, LOW);
   //   theSPI.transfer(0x01);
@@ -159,7 +189,7 @@ public:
    * @param ay true inertical acc in m/s^2
    * @param az true inertical acc in m/s^2
    */
-  void get(float& yaw, float& pitch, float& roll, float& yawd, float& pitchd, float& rolld, float& ax, float& ay, float& az) {
+  uint8_t get(float& yaw, float& pitch, float& roll, float& yawd, float& pitchd, float& rolld, float& ax, float& ay, float& az) {
     // VN100: 27 (48bytes) = YPR,MAG,ACC,ANGRATES
     // VN100: 240 (36bytes) = YPR,TRUE_INERTIAL_ACC,ANGRATES
 
@@ -205,7 +235,8 @@ public:
 
     // time polling: 350us @ clock div 4, 270us @ clock div 2
     static float dat[9];
-    readReg(240, 36, (uint8_t *)dat);
+    uint8_t errId = readReg(240, 36, (uint8_t *)dat);
+    // problems with reading?
     yaw = radians(dat[0]);
     pitch = radians(dat[1]);
     roll = radians(dat[2]);
@@ -215,6 +246,7 @@ public:
     yawd = dat[8];
     pitchd = dat[7];
     rolld = dat[6];
+    return errId;
   }
 
   /**
@@ -228,9 +260,9 @@ public:
    * @param pitchd in rad/s
    * @param rolld in rad/s
    */
-  void get(float& yaw, float& pitch, float& roll, float& yawd, float& pitchd, float& rolld) {
+  uint8_t get(float& yaw, float& pitch, float& roll, float& yawd, float& pitchd, float& rolld) {
     float ax, ay, az;// dummies
-    get(yaw, pitch, roll, yawd, pitchd, rolld, ax, ay, az);
+    return get(yaw, pitch, roll, yawd, pitchd, rolld, ax, ay, az);
   }
 };
 
