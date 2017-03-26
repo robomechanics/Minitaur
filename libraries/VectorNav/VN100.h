@@ -4,10 +4,19 @@
  * Proprietary and confidential
  * Written by Avik De <avik@ghostrobotics.io>
  */
-#ifndef VN100_h
-#define VN100_h
+#ifndef VN_h
+#define VN_h
 
 #include <SPI.h>
+
+#define VN_CMD_READ              0x01
+#define VN_CMD_WRITE             0x02
+#define VN_REG_VPE_MAG_CONFIG    36
+#define VN_REG_YPR_IACC_ANGR     240
+
+enum VN100ReadMode {
+  VN_REQUEST_WAIT_READ, VN_REQUEST, VN_READ_REQUEST
+};
 
 typedef struct {
   uint8_t dummy[4];
@@ -55,10 +64,10 @@ public:
     // VPE config (register 35) defaults are 1,1,1,1 - OK
     // VPE mag config (36) set all to 0 (don't trust magnetometer)
     float magConfig[9] = {0,0,0, 0,0,0, 0,0,0};
-    writeReg(36, 36, (const uint8_t *)magConfig);
+    writeReg(VN_REG_VPE_MAG_CONFIG, 36, (const uint8_t *)magConfig);
 
     // Test read and request (avoid wait)
-    // readReg(240, 0, NULL, 1);
+    // readReg(240, 0, NULL, VN_REQUEST);
 
     // Use DMA
     // RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
@@ -104,33 +113,47 @@ public:
    * @param reg Register ID
    * @param N Size of payload packet (in bytes)
    * @param buf Pre-allocated buffer to place payload packet in
-   * @param mode 0 means request and read, 1 means request and return, 2 means read and then request
+   * @param mode VN_REQUEST_WAIT_READ, VN_REQUEST, or VN_READ_REQUEST
    * @return Error ID
    */
-  uint8_t readReg(uint8_t reg, int N, uint8_t *buf, uint8_t mode=0) {
-    if (mode == 0 || mode == 1) {
+  uint8_t readReg(uint8_t reg, int N, uint8_t *buf, VN100ReadMode mode=VN_REQUEST_WAIT_READ) {
+    if (mode == VN_REQUEST_WAIT_READ || mode == VN_REQUEST) {
       // Request
       digitalWrite(csPin, LOW);
-      // delayMicroseconds(1);
-      theSPI.transfer(0x01);
-      theSPI.transfer(reg);
-      theSPI.transfer(0x00);
-      theSPI.transfer(0x00);
-      // delayMicroseconds(1);
+
+      // Seems like VN100 likes a small gap between bytes. 
+      // Waiting for TXE delays by ~0.3us and that seems ok
+      SPI_SendData8(theSPI.SPIx, VN_CMD_READ);
+      while(!SPI_I2S_GetFlagStatus(theSPI.SPIx, SPI_I2S_FLAG_TXE));
+      SPI_SendData8(theSPI.SPIx, reg);
+      while(!SPI_I2S_GetFlagStatus(theSPI.SPIx, SPI_I2S_FLAG_TXE));
+      SPI_SendData8(theSPI.SPIx, 0);
+      while(!SPI_I2S_GetFlagStatus(theSPI.SPIx, SPI_I2S_FLAG_TXE));
+      SPI_SendData8(theSPI.SPIx, 0);
+      while(!SPI_I2S_GetFlagStatus(theSPI.SPIx, SPI_I2S_FLAG_TXE));
       digitalWrite(csPin, HIGH);
-      if (mode == 0)
-        // need to wait before response
-        delayMicroseconds(50);
-      else if (mode == 1)
+      if (mode == VN_REQUEST_WAIT_READ) {
+        // need to wait 50 ms before response. Use this delay to clear the RX byte
+        uint32_t start = micros();
+        while (micros() - start < 50) {
+          if (SPI_I2S_GetFlagStatus(theSPI.SPIx, SPI_I2S_FLAG_RXNE))
+            SPI_ReceiveData8(theSPI.SPIx);
+        }
+      }
+      else if (mode == VN_REQUEST)
         return 0;
     }
 
-    if (mode == 0 || mode == 2) {
+    if (mode == VN_REQUEST_WAIT_READ || mode == VN_READ_REQUEST) {
       digitalWrite(csPin, LOW);
       // delayMicroseconds(1);
       uint8_t c;
       for (int i=0; i<N+4; ++i) {
-        c = theSPI.transfer(0x00);
+        // c = theSPI.transfer(0x00);
+        SPI_SendData8(theSPI.SPIx, 0);
+        while(!SPI_I2S_GetFlagStatus(theSPI.SPIx, SPI_I2S_FLAG_RXNE));
+        c = SPI_ReceiveData8(theSPI.SPIx);
+
         if (i<4)
           resphead[i] = c;
         else
@@ -138,16 +161,18 @@ public:
       }
       // delayMicroseconds(1);
       digitalWrite(csPin, HIGH);
-      if (mode == 2) {
+      if (mode == VN_READ_REQUEST) {
         // Request again
         delayMicroseconds(5);
         digitalWrite(csPin, LOW);
-        // delayMicroseconds(1);
-        theSPI.transfer(0x01);
-        theSPI.transfer(reg);
-        theSPI.transfer(0x00);
-        theSPI.transfer(0x00);
-        // delayMicroseconds(1);
+        SPI_SendData8(theSPI.SPIx, VN_CMD_READ);
+        while(!SPI_I2S_GetFlagStatus(theSPI.SPIx, SPI_I2S_FLAG_TXE));
+        SPI_SendData8(theSPI.SPIx, reg);
+        while(!SPI_I2S_GetFlagStatus(theSPI.SPIx, SPI_I2S_FLAG_TXE));
+        SPI_SendData8(theSPI.SPIx, 0);
+        while(!SPI_I2S_GetFlagStatus(theSPI.SPIx, SPI_I2S_FLAG_TXE));
+        SPI_SendData8(theSPI.SPIx, 0);
+        while(!SPI_I2S_GetFlagStatus(theSPI.SPIx, SPI_I2S_FLAG_TXE));
         digitalWrite(csPin, HIGH);
       }
       return resphead[3];
@@ -260,9 +285,9 @@ public:
 
     // time polling: 350us @ clock div 4, 270us @ clock div 2
     static float dat[9];
-    uint8_t errId = readReg(240, 36, (uint8_t *)dat);
+    uint8_t errId = readReg(VN_REG_YPR_IACC_ANGR, 36, (uint8_t *)dat);
     // test read and request
-    // uint8_t errId = readReg(240, 36, (uint8_t *)dat, 2);
+    // uint8_t errId = readReg(240, 36, (uint8_t *)dat, VN_READ_REQUEST);
     // problems with reading?
     yaw = radians(dat[0]);
     pitch = radians(dat[1]);
