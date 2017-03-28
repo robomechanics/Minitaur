@@ -1,15 +1,12 @@
-/**
- * Copyright (C) Ghost Robotics - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Avik De <avik@ghostrobotics.io>
- */
+
 #include <Arduino.h>
 #include <WMath.h>
 #include "HAL.h"
 #include "Remote.h"
 #include "IMUObject.h"
 
+const uint8_t VsourcePin = PF2;
+DLPF VsourceF;
 // LEDs
 const uint8_t led0 = PD1, led1 = PD0;
 // heartbeat
@@ -63,8 +60,10 @@ MinitaurLeg(&M[6], &M[7])};//3
 // MinitaurLeg(&M[2], &M[3]), //1
 // MinitaurLeg(&M[4], &M[5]), //2
 // MinitaurLeg(&M[7], &M[6])};//3
+float ux[4], uz[4];
 
 // Safety check
+// volatile uint32_t legStuckTimer[4];
 volatile uint32_t legStuckTimer[8];
 
 void enable(bool flag) {
@@ -85,10 +84,13 @@ void errorStop(const char *msg) {
 }
 
 void halInit() {
+  // leds
   pinMode(led0, OUTPUT);
   pinMode(led1, OUTPUT);
   digitalWrite(led1, HIGH);
-
+  // Vsource
+  VsourceF.init(0.999, CONTROL_RATE, DLPF_SMOOTH);
+  pinMode(VsourcePin, INPUT_ANALOG);
 
   Motor::updateRate = CONTROL_RATE;
   Motor::velSmooth = 0.55;
@@ -139,7 +141,7 @@ void halInit() {
   for (int i=0; i<NMOT; ++i) {
     uint8_t port = motorPort[i];
     M[i].init(pwmPin[port], posPin[port], motZeros[i], dir[i]);
-    M[i].setTorqueEstParams(0.0954, 0.186, 16);
+    M[i].setTorqueEstParams(0.0954, 0.186, 16, 60);
 
     // current reading: these are on EXTI, and on T15, T3 (for J8 and J9)
     // try to set to lower priority
@@ -157,7 +159,7 @@ void halInit() {
 
   // Try to init openlog (don't stop if no SD card)
   openLog.begin(115200, sizeof(X), (void *)&X, 0);
-  openLog.initOpenLog("t,r,p,y,q0,q1,q2,q3,q4,q5,q6,q7,u0,u1,u2,u3,u4,u5,u6,u7,xd,mo", "IffffffffffffffffffffB");
+  openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,u0,u1,u2,u3,u4,u5,u6,u7,xd,Vb,mo", "IffffffffffffffffffffffffB");
 
   // Hardware setup done
   digitalWrite(led0, HIGH);
@@ -203,8 +205,12 @@ void halUpdate() {
     }
   }
 
-
+  // IMU
   imu->updateInterrupt();
+  // Vsource
+  // 3.3V, Volt div 470 & 10k, 12bit. So 3.3/4096*(10470/470) = 0.01794745262
+  // empirical tuning: 
+  X.Vbatt = VsourceF.update(analogRead(VsourcePin)) * 0.02009387094;
 
 
   // totalPings+=NMOT;
@@ -225,6 +231,10 @@ void halUpdate() {
     // bias should be about 825
     // X.cur[i] = (uint16_t)(rawCur * 1650);
     X.torque[i] = M[i].getTorque();
+  }
+  for (int i=0; i<4; ++i) {
+    // NOTE ux>0 when leg pushed "back", uz>0 when pushed "up"
+    leg[i].getToeForceXZ(X.pitch, (i>1), ux[i], uz[i]);
   }
   // mode is set elsewhere
   if (X.t - lastOLwrite > 9) {

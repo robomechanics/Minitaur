@@ -1,14 +1,5 @@
-/**
- * Copyright (C) Ghost Robotics - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Avik De <avik@ghostrobotics.io>
- */
+
 #include <Motor.h>
-// #if USE_BUS
-// #include <DxlNode.h>
-// #include <DxlMotor.h>
-// #endif
 #include <SPI.h>
 #include <VN100.h>
 #include <BulkSerial.h>
@@ -22,19 +13,19 @@
 // Change the upload port (in Arduino or Makefile)
 
 Peripheral *remote = &remoteRC;// remoteRC / remoteComputer
-const bool REMOTE_RC_EXTRA_CHANNELS = true; // only for remoteRC: true if 6 channels connected
+const bool REMOTE_RC_6CH = true;//false if only 4 channels connected
 Peripheral *imu = &imuVN100;// imuVN100 / imuMPU6000
 // ====== To save compile time if not using MPU6000, comment next two lines =====
-#include <MPU6000.h>
-#include <Eigen.h>
+// #include <MPU6000.h>
+// #include <Eigen.h>
 
-// This must be set per robot
-const float motZeros[8] = {0.379, 5.197, 3.540, 5.827, 5.669, 4.696, 1.183, 6.087};//Penn Mini
+// This must be set per robot zeros must be checked before running!
+const float motZeros[8] = {1.973, 4.321, 0.509, 6.192, 0.586, 1.108, 1.832, 5.987};//DM Mini
 
 // Behavior array: add behaviors here. First one in the array is the starting behavior.
 // Make sure the #include is in Remote.h
-const int NUM_BEHAVIORS = 1;
-Behavior *behaviorArray[NUM_BEHAVIORS] = {&bound};
+const int NUM_BEHAVIORS = 2;
+Behavior *behaviorArray[NUM_BEHAVIORS] = {&bound, &walk};
 
 // ======================================================================
 
@@ -45,20 +36,33 @@ uint32_t tPwrOnAnim0 = 0, tPwrOnAnimEnd = 3000;
 float pwrOnExt[4], pwrOnAng[4];
 
 void debug() {
+  // TEST
   Serial1 << X.t << "\t";
   // Serial1 << controlTime << "\t";
   // Serial1 << pronk.getToeForceRadial();
   // Serial1 << yawDes;
-
+  // Serial1 << bipedalWalk.thetaft << "\t" << bipedalWalk.Rft << "\t";
+  // Serial1 << walk.frac << "\t";
+  // float ur, uth;
+  // leg[0].getToeForce(ur, uth);
+  // Serial1 << ur << "\t" << uth << "\t";
+  // leg[2].getToeForce(ur, uth);
+  // Serial1 << ur << "\t" << uth << "\t";
+  // Serial1 << ux[1] << "\t" << uz[1] << "\t" << ux[3] << "\t" << uz[3] << "\t";
   // IMU
   // Serial1 << X.roll << "\t" << X.pitch << "\t" << X.yaw << "\t";
-  // Serial1 << rolldot << "\t" << pitchdot << "\t";
+  // Serial1 << rolldot << "\t" << pitchdot << "\t" << yawdot;
   // Serial1 << trot.d03.att << "\t" << trot.d21.att << "\t" << trot.d03.datt << "\t" << trot.d21.datt;
 
- //  // RC RECEIVER
- // for (int i=0; i<RemoteRC::NRECPINS; ++i)
- //   Serial1 << remoteRC.rcCmd[i] << "\t";
-  // Serial1 << speedDes << "\t" << yawDes;
+  //  // RC RECEIVER
+  // for (int i=0; i<RemoteRC::NRECPINS; ++i)
+  //   Serial1 << remoteRC.rcCmd[i] << "\t";
+  // Serial1 << speedDes << "\t" << yawDes << "\t" << vertDes << "\t" << remoteKnob << "\t";
+
+  // Serial1 << remoteComputer.computerPacket.cmd << ": ";
+  // for (int i=0; i<16; ++i) {
+  //   Serial1 << remoteComputer.computerPacket.params[i] << " ";
+  // }
 
   // MOTORS
   for (int i=0; i<NMOT; ++i) {
@@ -87,6 +91,7 @@ void debug() {
 void controlLoop() {
   uint32_t tic = micros();
   halUpdate();
+
   // TEST individual motors
   // for (int i=0; i<NMOT; ++i) {
   //   M[i].enable(true);
@@ -97,7 +102,7 @@ void controlLoop() {
 
   // BEHAVIOR
   // "soft start"
-  if ((behavior == &bound) && millis() < tPwrOnAnimEnd) {
+  if ((behavior == &bound || behavior == &walk) && millis() < tPwrOnAnimEnd) {
     if (!bPwrOnStateObtained) {
       for (int i=0; i<4; ++i) {
         pwrOnAng[i] = leg[i].getPosition(ANGLE);
@@ -114,7 +119,7 @@ void controlLoop() {
         leg[i].setGain(ANGLE, 0.05);
       // these two depend on the behavior: could make the behavior return these
       // for now these are reasonable for bound
-      float behavExtDes = 1.5;//(behavior == &bound) ? 1.5 : 1.0;
+      float behavExtDes = (behavior == &bound) ? 1.5 : 1.0;
       float behavAngDes = 0.0;
       leg[i].setPosition(EXTENSION, map(constrain(millis(),0,3000),tPwrOnAnim0,3000,pwrOnExt[i],behavExtDes));
       float ang0 = pwrOnAng[i];
@@ -142,7 +147,6 @@ void setup() {
   // Should use 500Hz when 4 motors/port, try 1000 with 2/port
   attachTimerInterrupt(0, controlLoop, CONTROL_RATE);
   // attachTimerInterrupt(1, debug, 20);
-
   if (remote != &remoteComputer) {
     enable(true);
     // for testing
@@ -158,6 +162,7 @@ void setup() {
   // delay(5000);
   // behavior->end();
   // digitalWrite(led1, HIGH);
+  // openLog.enable(true);
 }
 
 void loop() {

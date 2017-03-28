@@ -11,6 +11,9 @@ Bound bound;
 void Bound::begin() {
   MinitaurLeg::useLengths = false;
   tstart = X.t;
+  front.signalState = SIGNAL_NONE;
+  rear.signalState = SIGNAL_NONE;
+  X.xd = 0;
   // waitingToStart = true;
   if (bAutopilot) {
     headingDes = X.yaw;
@@ -37,7 +40,7 @@ bool BoundLeg::update(bool bAbsLegAngle, bool bAutopilot, uint32_t tstart, float
   // float kSpring = 1.8;//MEGA
 #if USE_BUS
   float kSpring = 0.75;//MINI
-  float kVert = 0.17;//MINI
+  float kVert = 0.19;//MINI
 #else
   // from old code
   // float kSpring = 0.55;//MINI
@@ -46,7 +49,7 @@ bool BoundLeg::update(bool bAbsLegAngle, bool bAutopilot, uint32_t tstart, float
   float kVert = 0.19;//MINI
 #endif
   // float kVert = 0.4;//MEGA
-  float kOffset = 0.015;//constrain(0.05 * fabsf(X.xd), 0, 0.2);
+  float kOffset = 0.03;//constrain(0.05 * fabsf(X.xd), 0, 0.2);
 
   // Attitude control params
   float kRoll = 2.0, kRollDot = 0.02;//0.02;//MINI
@@ -69,8 +72,8 @@ bool BoundLeg::update(bool bAbsLegAngle, bool bAutopilot, uint32_t tstart, float
   float kStrideLength = tstance*0.001 / 0.36;
 
   // STAND PARAMS
-  float kExtStand = 0.4;
-  float kAngStand = 0.7;
+  float kExtStand = 0.15;
+  float kAngStand = 0.3;
 
   // SPEED DEPENDENT PARAMS
   // kVert += 0.01 * constrain(fabsf(X.xd), 0, 2);
@@ -86,9 +89,9 @@ bool BoundLeg::update(bool bAbsLegAngle, bool bAutopilot, uint32_t tstart, float
     speedDes = 0;
     int t2 = X.t - tstart - 2000;
     if (t2 > 0 && t2 <= 10000) {
-      speedDes = 0.0001 * t2;
+      speedDes = 0.00017 * t2;
     } else if (t2 > 10000) {
-      speedDes = 1.0 + 0.0001 * (t2 - 10000);
+      speedDes = 1.7 + 0.0001 * (t2 - 10000);
     }
   }
 
@@ -106,6 +109,11 @@ bool BoundLeg::update(bool bAbsLegAngle, bool bAutopilot, uint32_t tstart, float
   float speedErr = constrain(speedDes-X.xd, -0.05, 0.05);
 
   if (mode == STANCE) {
+    // increase tstance for leap
+    if (signalState == SIGNAL_LEAP_STANCE){
+      tstance += (bFront) ? 50 : 60;
+    }
+    // normal stuff
     float frac = interpFrac(tTD, tTD + tstance, X.t);
     // float ang = atan2((ext - tdPos)*PI/tstance, extVel);
     // float phaseTerm = constrain(0.15 * latDes, -0.3, 0.3);//-0.3;
@@ -113,14 +121,23 @@ bool BoundLeg::update(bool bAbsLegAngle, bool bAutopilot, uint32_t tstart, float
     float phaseTerm = phaseControlGain * arm_sin_f32(pitchdot);
     // front-back leap
     if (signalState == SIGNAL_LEAP_STANCE) {
+      kRoll =20;
+      kRollDot = 2;
       if (bFront) {
-        if (frac > 0.3)
-          kOffset = 0.8;
+        if (frac > 0.2) // fraction through stance
+          kOffset = 0.7; // SetOpenLoop for bFront
+
+        angDes += 0.2; //0.26//this should be a function of speed? // adds x radians to the already calculated desired 
       } else {
-        if (frac > 0.3)
-          kOffset = 0.8;
+         // PI/3
+        // if (frac>.1){
+          // angDes +=PI/6.0;
+        // }
+        if (frac>0.2/*0.4*/){
+          kOffset = 0.5; //rear leg offset 
+        }
+       angDes += 0.35;
       }
-      angDes += 0.1;
     }
 
     float vertTerm = -kVert * arm_cos_f32(frac * PI);
@@ -130,7 +147,7 @@ bool BoundLeg::update(bool bAbsLegAngle, bool bAutopilot, uint32_t tstart, float
     //   uvert += (bFront) ? 0.3 : 0.8;
     // }
     // Roll when yawing
-    float rollDes = constrain(0.4 * fabsf(X.xd) * yawDes, -0.1, 0.1);
+    float rollDes = 0;//constrain(0.4 * fabsf(X.xd) * yawDes, -0.1, 0.1);
     float uroll = kRoll * (X.roll - rollDes) + kRollDot * rolldot;
     uroll = (frac > 0.3) ? constrain(uroll, -0.2, 0.2) : 0;
     setOpenLoop(EXTENSION, uvert, uroll);
@@ -155,7 +172,20 @@ bool BoundLeg::update(bool bAbsLegAngle, bool bAutopilot, uint32_t tstart, float
   } else if (mode == FLIGHT) {
     if (signalState == SIGNAL_LEAP_LAND) {
       // TODO legs track absolute angle on leap land
-      if (bFront) angDes -= 0.25;
+      // if (X.t-tLO<250){
+      //     flightPos -= 0.75;
+      //     tdPos -= 0.95;
+      //     //if(bFront) angDes  = -constrain(X.pitch,-1,1)-PI/2;
+      //   }else if(X.t-tLO>=250 && X.t-tLO<300){
+      //     tdPos-=0.95;
+      //     angDes += (-0.15-constrain(X.pitch, -1, 1));
+      //   }else{
+      //     angDes += (-0.15-constrain(X.pitch, -1, 1));
+      //   }
+      angDes += (-0.1 -constrain(X.pitch, -1, 1));
+    } else {
+      // test abs leg angle flight
+      // angDes += (-constrain(X.pitch, -1, 1));
     }
 
     setGain(EXTENSION, kExtFltP, kExtFltD);
@@ -164,7 +194,9 @@ bool BoundLeg::update(bool bAbsLegAngle, bool bAutopilot, uint32_t tstart, float
 
     // FOREAFT
     // get to the neutral point, servo around it
+    if(signalState != SIGNAL_LEAP_LAND){
     angDes += asinf(kStrideLength * (-X.xd + 0.3 * speedErr));
+    }
     if (X.t - tLO < 20)
       setGain(ANGLE, 0);
     else
@@ -172,7 +204,7 @@ bool BoundLeg::update(bool bAbsLegAngle, bool bAutopilot, uint32_t tstart, float
     // 
     // yawDes is between +/- 1
     // FIXME: correct for body pitch, but IMU delay
-    float uyaw = constrain(- 0.7 * yawDes + 0.04 * yawdot, -0.5, 0.5);
+    float uyaw = constrain(-yawDes /*+ 0.1 * yawdot*/, -0.3, 0.3);
     setPosition(ANGLE, angDes, uyaw);
     
     if (ext < tdPos && extVel < 0)// && X.t - tLO > tretract+20)

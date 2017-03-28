@@ -1,19 +1,19 @@
-/**
- * Copyright (C) Ghost Robotics - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Avik De <avik@ghostrobotics.io>
- */
+
 #ifndef HAL_h
 #define HAL_h
+
+#include <stdint.h>
 
 // TODO stop using preprocessor
 #define USE_BUS 0
 
 // globals defined in Remote.cpp, for use by behaviors
-extern float speedDes, yawDes, latDes;
+extern float speedDes, yawDes, latDes, vertDes;
+extern uint8_t remoteKnob;
 // defined in IMUObject.cpp
 extern volatile float rolldot, pitchdot, yawdot;
+// defined in HAL.cpp
+extern float ux[4], uz[4];
 // defined in .ino
 extern const float motZeros[];
 
@@ -41,15 +41,19 @@ struct LogVector {
   // regular log
   volatile uint32_t t;//4
   // pitch = body pitch
-  volatile float roll, pitch, yaw;//12
+  volatile float roll, pitch, yaw;//16
+  //r pitchdot, rolldot, yawdot
+  volatile float rolldot, pitchdot, yawdot;//28
   // Motor positions
-  volatile float q[8];//44
+  volatile float q[8];//60
   // Motor currents
-  volatile float torque[8];//76
+  volatile float torque[8];//92
   // forward velocity
-  volatile float xd;//80
+  volatile float xd;//96
+  // forward velocity
+  volatile float Vbatt;//100
   // 8-bit discrete mode
-  volatile uint8_t mode;//81
+  volatile uint8_t mode;//101
 } __attribute__ ((packed));
 extern volatile LogVector X;
 
