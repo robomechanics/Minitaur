@@ -101,7 +101,7 @@ void MinitaurLeg::getToeForce(float& ur, float& uth) {
   uth = u0-u1;
 }
 
-void MinitaurLeg::getToeForceXZ(float pitch, bool bRight, float& ux, float& uz) {
+void MinitaurLeg::getToeForceXZ(float pitch, float& ux, float& uz) {
   static float ur, uth, r, th;
   getToeForce(ur, uth);
   // from the perspective of the world

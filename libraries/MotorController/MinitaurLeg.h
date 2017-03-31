@@ -70,7 +70,7 @@ public:
    * @param ux Returns horizontal force in N. It is >0 if leg is pushed "back"
    * @param uz Returns vertical force in N. It is >0 if leg is pushed "up"
    */
-  void getToeForceXZ(float bodyPitch, bool bRight, float& ux, float& uz);
+  void getToeForceXZ(float bodyPitch, float& ux, float& uz);
 
 protected:
   // this does the full FK irrespective of if useLengths is false
