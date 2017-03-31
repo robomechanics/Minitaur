@@ -20,7 +20,7 @@ public:
   virtual void update() = 0;
   virtual bool running() = 0;
   virtual void end() = 0;
-  virtual void signal() {}
+  virtual void signal(uint8_t sig=0) {}
 };
 
 /** @} */ // end of addtogroup
