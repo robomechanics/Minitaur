@@ -1,12 +1,14 @@
-
+/**
+ * Copyright (C) Ghost Robotics - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Avik De <avik@ghostrobotics.io>
+ */
 #include "IMUObject.h"
 
 
 // convention: roll right > 0, pitch forward > 0
 // corresponds to roll axis = +x (forward), pitch axis = +y (left)
-
-// globals used by robot
-volatile float rolldot = 0, pitchdot = 0, yawdot = 0;
 
 // globals
 IMUVN100 imuVN100;

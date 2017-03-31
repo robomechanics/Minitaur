@@ -1,3 +1,9 @@
+/**
+ * Copyright (C) Ghost Robotics - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Avik De <avik@ghostrobotics.io>
+ */
 #ifndef IMUObject_h
 #define IMUObject_h
 

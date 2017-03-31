@@ -1,4 +1,9 @@
-
+/**
+ * Copyright (C) Ghost Robotics - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Avik De <avik@ghostrobotics.io>
+ */
 #include <Arduino.h>
 #include <WMath.h>
 #include "HAL.h"
@@ -234,7 +239,7 @@ void halUpdate() {
   }
   for (int i=0; i<4; ++i) {
     // NOTE ux>0 when leg pushed "back", uz>0 when pushed "up"
-    leg[i].getToeForceXZ(X.pitch, (i>1), ux[i], uz[i]);
+    leg[i].getToeForceXZ(X.pitch, ux[i], uz[i]);
   }
   // mode is set elsewhere
   if (X.t - lastOLwrite > 9) {

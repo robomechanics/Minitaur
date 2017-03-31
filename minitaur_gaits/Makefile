@@ -1,6 +1,6 @@
 
 all:
-	"C:\Users\avik\Documents\arduino-1.6.1\arduino_debug" --upload --board koduino:stm32:f303v:hse=8m,bootloader=stm32loader --port COM13 "C:\Users\avik\Documents\mainboard-libraries\minitaur_basic_gaits\minitaur_basic_gaits.ino"
+	C:/Users/avik/Documents/arduino-1.6.1/arduino_debug --upload --board koduino:stm32:f303v:hse=8m,bootloader=stm32loader --port COM7 C:/Users/avik/Documents/mainboard-libraries/minitaur_gaits/minitaur_gaits.ino
 
 # # # Mainboard2
 # # VARIANT = f40_41x
