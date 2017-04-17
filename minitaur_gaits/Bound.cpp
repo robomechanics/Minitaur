@@ -19,19 +19,20 @@
 Bound bound;
 
 const BoundParameters minitaurBoundParams = {
-  .angNom = {-0.01, 0.17}, //front/rear
+  .angNom = {0.02, 0.19},// increased for big toes
+  //{-0.01, 0.17}, //front/rear
   // hybrid system params
   // tstance is now only used for the FA kStrideLength estimation, not for VH
   .tstance = 110, .tdExt = 1.6,
   // stance virtual spring params
-  .kSpring = 0.5, .kVert = 0.18, .kOffset = 0.0,
+  .kSpring = 0.5, .kVert = 0.16, .kOffset = 0.0,
   // FA (or flight) params
   .kAngStance = 0.3, 
   .kExtFltP = 0.4, .kExtFltD = 0.005,
-  .kAngFltP = 0.8, .kAngFltD = 0.005,
+  .kAngFltP = 1.5, .kAngFltD = 0.01,
   .kNomLegRad = 0.17,
   // Attitude control params
-  .kRoll = 3.0, .kRollDot = 0.01,
+  .kRoll = 2.0, .kRollDot = 0.05,
   // Retraction params
   .tretract = 100, .extMin = 0.6,
   // Stand params
@@ -75,10 +76,16 @@ bool BoundLeg::update() {
   // due to possible inversion this may change
   bool bFront = pBound->isFront(legi[0]);
   const BoundParameters *p = pBound->params;
-  // New absolute leg angle
   float angDes = (bFront) ? p->angNom[0] : p->angNom[1];
-  if (pBound->bAbsLegAngle)
+  if (pBound->bAbsLegAngle) {
+    // New absolute leg angle
     angDes -= X.pitch;
+  } else {
+    // no abs leg angle
+    if (pBound->bInverted) {
+      angDes = (bFront) ? PI+p->angNom[1] : PI+p->angNom[0];
+    }
+  }
   // phase control
   float phaseControlGain = bFront ? pBound->phaseControlGain : -pBound->phaseControlGain;
 
@@ -98,7 +105,6 @@ bool BoundLeg::update() {
   if (mode == STANCE) {
     // TEST
     float phaseTerm = phaseControlGain * arm_sin_f32(X.pitchdot);
-    // front-back leap
 
     // Use vertDes to add energy (may be helpful to compensate for lower Vbatt; or do that automatically)
     float offset = p->kOffset + map(vertDes, 0.0, 1.0, 0.0, 0.3);
