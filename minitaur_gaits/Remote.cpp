@@ -7,8 +7,11 @@
 #include "Remote.h"
 #include "HAL.h"
 
+// TODO: filter toggle switch to avoid noise
+
 // globals set by the remote
-float speedDes = 0, yawDes = 0, latDes = 0;
+float speedDes = 0, yawDes = 0, latDes = 0, vertDes = 0;
+uint8_t remoteKnob = 0;// 1--6
 RemoteRC remoteRC;
 RemoteComputer remoteComputer;
 
@@ -29,8 +32,7 @@ void RemoteRC::begin() {
     pinMode(rcRecPin[i], PWM_IN_EXTI);
 
   // Low pass user desired speed
-  speedDesF.init(0.9995, CONTROL_RATE, DLPF_SMOOTH);
-  // speedDesF.init(0.9, CONTROL_RATE, DLPF_SMOOTH);
+  speedDesF.init(0.999, CONTROL_RATE, DLPF_SMOOTH);
   yawDesF.init(0.5, CONTROL_RATE, DLPF_SMOOTH);
 }
 
@@ -47,21 +49,39 @@ void RemoteRC::updateInterrupt() {
   }
 
   // this depends on the position of the "throttle", so setting that before flipping the switch could select different behaviors?
-  throttle = (rcCmd[1] > 6.5 && rcCmd[1] < 15);
+  bool throttleMeasurement = (rcCmd[1] > 6.5);
+  // try to debounce by adding some hysteresis
+  if (throttle == throttleMeasurement)
+    throttleChangeCounter = 0;
+  else
+    throttleChangeCounter++;
+  if (throttleChangeCounter > CONTROL_RATE/3)// debounce
+    throttle = throttleMeasurement;
 
   float rvstick = (rcCmd[0] - REMOTE_RC_ZERO);
   float rhstick = (rcCmd[3] - REMOTE_RC_ZERO);
-  // HIGH SENSITIVITY
-  // speedDes = speedDesF.update(0.5 * rvstick);
-  // yawDes = yawDesF.update(0.1 * rhstick);
-  // LOW SENSITIVITY
-  speedDes = speedDesF.update(0.2 * rvstick);
-  yawDes = yawDesF.update(0.05 * rhstick);
+  speedDes = speedDesF.update(0.4 * rvstick);//HIGH SENSITIVITY
+  // speedDes = speedDesF.update(0.2 * rvstick);// LOW SENSITIVITY
+  // yawDes = yawDesF.update(0.05 * rhstick);
+  yawDes = yawDesF.update(0.03 * rhstick);
   latDes = 0;//lhstick;
+
+  if (REMOTE_RC_6CH) {
+    vertDes = constrain(map(rcCmd[4], 5.41, 9.83, 0.05, 0.95), 0, 1);
+    // knob: 6.32, 6.84, 7.37, 7.89, 8.95, 9.44 (5.16 when remote off)
+    if (rcCmd[5] > 5.5 && rcCmd[5] <= 6.55) remoteKnob = 1;
+    else if (rcCmd[5] > 6.55 && rcCmd[5] <= 7.1) remoteKnob = 2;
+    else if (rcCmd[5] > 7.1 && rcCmd[5] <= 7.65) remoteKnob = 3;
+    else if (rcCmd[5] > 7.65 && rcCmd[5] <= 8.4) remoteKnob = 4;
+    else if (rcCmd[5] > 8.4 && rcCmd[5] <= 9.2) remoteKnob = 5;
+    else if (rcCmd[5] > 9.2 && rcCmd[5] <= 10) remoteKnob = 6;
+    else remoteKnob = 0;
+  }
+
   // end behavior
   if (behavior->running() && !throttle) {
     behavior->end();
-    digitalWrite(led1, HIGH);
+    // digitalWrite(led1, HIGH);
     openLog.enable(false);
   }
 }
@@ -69,30 +89,57 @@ void RemoteRC::updateInterrupt() {
 void RemoteRC::updateLoop() {
   // start behavior
   if (!behavior->running() && throttle) {
-    digitalWrite(led1, LOW);
+    // digitalWrite(led1, LOW);
     behavior->begin();
     openLog.enable(true);
   }
-  if (millis() > 2000 && fabsf(rcCmd[2] - REMOTE_RC_ZERO) > 1.5 && fabsf(rcCmd[2] - REMOTE_RC_ZERO) < 5 && millis() - lastSignal > REMOTE_SIGNAL_HYSTERESIS) {
-    if (behavior->running()) {
-      // signal
-      behavior->signal();
-    } else {
-      // Cycle through behaviors
-      halHeartbeatEnabled = false;
-      curBehavior = (rcCmd[2] > REMOTE_RC_ZERO) ? curBehavior+1 : curBehavior+NUM_BEHAVIORS-1;
-      curBehavior = curBehavior % NUM_BEHAVIORS;
-      for (uint8_t i=0; i<2*(curBehavior+1); ++i) {
-        digitalWrite(led1, TOGGLE);
-        digitalWrite(led0, TOGGLE);
-        delay(25);
-      }
+
+  // Cycle through behaviors
+  if (REMOTE_RC_6CH && !behavior->running()) {
+    if (remoteKnob > 0 && remoteKnob <= NUM_BEHAVIORS) {
+      curBehavior = remoteKnob-1;
       behavior = behaviorArray[curBehavior];
-      halHeartbeatEnabled = true;
+    }
+  }
+  // signal / cycle through behaviors
+  if (millis() > 2000 && fabsf(rcCmd[2] - REMOTE_RC_ZERO) > 1.3 && fabsf(rcCmd[2] - REMOTE_RC_ZERO) < 5 && millis() - lastSignal > REMOTE_SIGNAL_HYSTERESIS) {
+    // the "if" above is true if the left stick horiz is pushed as a switch
+    if (REMOTE_RC_6CH) {
+      // Knob => this doesn't interfere with behavior selection
+      behavior->signal();
+      lastSignal = millis();
+    } else {
+      // if no knob, signal only if behavior isn't running
+      if (behavior->running()) {
+        behavior->signal();
+        lastSignal = millis();
+      } else {
+        halHeartbeatEnabled = false;
+        curBehavior = (rcCmd[2] > REMOTE_RC_ZERO) ? curBehavior+1 : curBehavior+NUM_BEHAVIORS-1;
+        curBehavior = curBehavior % NUM_BEHAVIORS;
+        for (uint8_t i=0; i<2*(curBehavior+1); ++i) {
+          digitalWrite(led1, TOGGLE);
+          digitalWrite(led0, TOGGLE);
+          delay(25);
+        }
+        behavior = behaviorArray[curBehavior];
+        halHeartbeatEnabled = true;
+      }
     }
     lastSignal = millis();
   }
 }
+
+// Empty behavior for computer to set positions/openloop directly
+class DoNothing : public Behavior {
+public:
+  void begin() {}
+  void update() {}
+  bool running() { return false; }
+  void end() {}
+  void signal() {}
+};
+DoNothing doNothing;
 
 void RemoteComputer::begin() {
   // raspi
@@ -110,6 +157,7 @@ void RemoteComputer::updateInterrupt() {
   // receive
   int res = rpi.received(0xbbaa, (uint8_t *)&computerPacket);
   if (res) {
+    // FIXME need to check checksum!
     lastRx = millis();
     // Serial1 << millis() << "\t";
     // Serial1 << _HEX(computerPacket.align) << "\t";
@@ -118,18 +166,46 @@ void RemoteComputer::updateInterrupt() {
     // Serial1 << computerPacket.param2 << "\t";
     // Serial1 << computerPacket.checksum << "\n";
   }
+  // 115200 baud rate => can send 115200/(8*1024)*7 = ~100 bytes in 7 ms
   if (millis() - lastTx > 9) {
     rpi.write();
     lastTx = millis();
   }
-
-  float rvstick = constrain(computerPacket.param1, -2, 2);// m/s
-  float rhstick = constrain(computerPacket.param2, -0.5, 0.5);// bound uses between -0.25,0.25 in arbitrary units
-  speedDes = speedDesF.update(rvstick);
-  yawDes = yawDesF.update(rhstick);
-  latDes = 0;
   // kill motors if cmd is kill
   enable(computerPacket.cmd != RemoteComputer::CMD_KILL);
+
+  // Handle set_twist
+  if (computerPacket.cmd!=CMD_SET_POSITION && computerPacket.cmd!=CMD_SET_OPEN_LOOP) {
+    // UNICYCLE COMMANDS
+    float rvstick = constrain(computerPacket.params[0], -2, 2);// m/s
+    float rhstick = constrain(computerPacket.params[1], -0.5, 0.5);// bound uses between -0.25,0.25 in arbitrary units
+    speedDes = speedDesF.update(rvstick);
+    yawDes = yawDesF.update(rhstick);
+    latDes = 0;
+  }
+
+  // Handle set_position and gait selection
+  if (computerPacket.cmd==CMD_SET_POSITION) {
+    behavior = &doNothing;
+    for (int i=0; i<4; ++i) {
+      // r0,th0,r1,th1,...,kr0,kth0,kr1,kth1,...
+      leg[i].setPosition(EXTENSION, computerPacket.params[2*i]);
+      leg[i].setPosition(ANGLE, computerPacket.params[2*i+1]);
+      leg[i].setGain(EXTENSION, computerPacket.params[2*i+8]);
+      leg[i].setGain(ANGLE, computerPacket.params[2*i+9]);
+    }
+  } else if (computerPacket.cmd==CMD_SET_OPEN_LOOP) {
+    behavior = &doNothing;
+    // TODO
+  } else if (computerPacket.cmd==CMD_SET_GAIT_BOUND) {
+    behavior = &bound;
+  } else if (computerPacket.cmd==CMD_SET_GAIT_WALK) {
+    behavior = &walk;
+  } else if (computerPacket.cmd==CMD_SIGNAL0 && millis() - lastSignal > REMOTE_SIGNAL_HYSTERESIS) {
+    behavior->signal();
+    lastSignal = millis();
+  }
+
   // log when bounding
   openLog.enable(behavior->running());
   // end behavior
@@ -141,7 +217,7 @@ void RemoteComputer::updateInterrupt() {
 
 void RemoteComputer::updateLoop() {
   // start behavior
-  if (!behavior->running() && (computerPacket.cmd == RemoteComputer::CMD_BOUND && millis() - lastRx <= RemoteComputer::TIMEOUT)) {
+  if (!behavior->running() && (computerPacket.cmd == RemoteComputer::CMD_START && millis() - lastRx <= RemoteComputer::TIMEOUT)) {
     // TODO switch computerPacket.cmd to select behavior
     digitalWrite(led1, LOW);
     behavior->begin();
