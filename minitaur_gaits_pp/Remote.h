@@ -1,3 +1,9 @@
+/**
+ * Copyright (C) Ghost Robotics - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Avik De <avik@ghostrobotics.io>
+ */
 #ifndef Remote_h
 #define Remote_h
 
@@ -7,9 +13,9 @@
 
 // ===== Include behaviors here =====
 #include "Bound.h"
+#include "Walk.h"
 #include "Dig.h"
-#include "forcefeedback.h"
-#include "traj.h"
+#include "pushWalk.h"
 // ==================================
 
 extern Behavior *behavior;
@@ -31,9 +37,10 @@ extern Peripheral *remote;// defined in .ino file
 class RemoteRC : public Peripheral {
 public:
   // local
-  DLPF speedDesF, yawDesF, enableF;
+  DLPF speedDesF, yawDesF;
 // remote
   volatile bool running, throttle;
+  volatile uint32_t throttleChangeCounter;// for debouncing
   const static int NRECPINS = 6;
   uint32_t lastSignal = 0;
   // RC receiver pins

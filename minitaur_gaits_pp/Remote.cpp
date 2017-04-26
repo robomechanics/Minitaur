@@ -1,6 +1,13 @@
-
+/**
+ * Copyright (C) Ghost Robotics - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Avik De <avik@ghostrobotics.io>
+ */
 #include "Remote.h"
 #include "HAL.h"
+
+// TODO: filter toggle switch to avoid noise
 
 // globals set by the remote
 float speedDes = 0, yawDes = 0, latDes = 0, vertDes = 0;
@@ -25,9 +32,8 @@ void RemoteRC::begin() {
     pinMode(rcRecPin[i], PWM_IN_EXTI);
 
   // Low pass user desired speed
-  speedDesF.init(0.9, CONTROL_RATE, DLPF_SMOOTH);
+  speedDesF.init(0.999, CONTROL_RATE, DLPF_SMOOTH);
   yawDesF.init(0.5, CONTROL_RATE, DLPF_SMOOTH);
-  enableF.init(0.5, CONTROL_RATE, DLPF_SMOOTH);
 }
 
 void RemoteRC::updateInterrupt() {
@@ -43,25 +49,25 @@ void RemoteRC::updateInterrupt() {
   }
 
   // this depends on the position of the "throttle", so setting that before flipping the switch could select different behaviors?
-  float enableCmd = enableF.update(rcCmd[1]);
-  throttle = (enableCmd > 6.5);
-
-  // For bound make speed more filtered to make it easier to drive
-  if (behavior == &bound)
-    speedDesF.smooth = 0.999;
+  bool throttleMeasurement = (rcCmd[1] > 6.5);
+  // try to debounce by adding some hysteresis
+  if (throttle == throttleMeasurement)
+    throttleChangeCounter = 0;
   else
-    speedDesF.smooth = 0.999;
+    throttleChangeCounter++;
+  if (throttleChangeCounter > CONTROL_RATE/3)// debounce
+    throttle = throttleMeasurement;
 
   float rvstick = (rcCmd[0] - REMOTE_RC_ZERO);
   float rhstick = (rcCmd[3] - REMOTE_RC_ZERO);
-  // speedDes = speedDesF.update(0.5 * rvstick);//HIGH SENSITIVITY
-  speedDes = speedDesF.update(0.2 * rvstick);// LOW SENSITIVITY
+  speedDes = speedDesF.update(0.4 * rvstick);//HIGH SENSITIVITY
+  // speedDes = speedDesF.update(0.2 * rvstick);// LOW SENSITIVITY
   // yawDes = yawDesF.update(0.05 * rhstick);
-  yawDes = yawDesF.update(0.025 * rhstick);
+  yawDes = yawDesF.update(0.03 * rhstick);
   latDes = 0;//lhstick;
 
   if (REMOTE_RC_6CH) {
-    vertDes = constrain(map(rcCmd[4], 5.41, 9.83, 0, 1), 0, 1);
+    vertDes = constrain(map(rcCmd[4], 5.41, 9.83, 0.05, 0.95), 0, 1);
     // knob: 6.32, 6.84, 7.37, 7.89, 8.95, 9.44 (5.16 when remote off)
     if (rcCmd[5] > 5.5 && rcCmd[5] <= 6.55) remoteKnob = 1;
     else if (rcCmd[5] > 6.55 && rcCmd[5] <= 7.1) remoteKnob = 2;
@@ -75,7 +81,7 @@ void RemoteRC::updateInterrupt() {
   // end behavior
   if (behavior->running() && !throttle) {
     behavior->end();
-    digitalWrite(led1, HIGH);
+    // digitalWrite(led1, HIGH);
     openLog.enable(false);
   }
 }
@@ -83,7 +89,7 @@ void RemoteRC::updateInterrupt() {
 void RemoteRC::updateLoop() {
   // start behavior
   if (!behavior->running() && throttle) {
-    digitalWrite(led1, LOW);
+    // digitalWrite(led1, LOW);
     behavior->begin();
     openLog.enable(true);
   }
@@ -98,11 +104,16 @@ void RemoteRC::updateLoop() {
   // signal / cycle through behaviors
   if (millis() > 2000 && fabsf(rcCmd[2] - REMOTE_RC_ZERO) > 1.3 && fabsf(rcCmd[2] - REMOTE_RC_ZERO) < 5 && millis() - lastSignal > REMOTE_SIGNAL_HYSTERESIS) {
     // the "if" above is true if the left stick horiz is pushed as a switch
-    if (behavior->running()) {
-      // signal
+    if (REMOTE_RC_6CH) {
+      // Knob => this doesn't interfere with behavior selection
       behavior->signal();
+      lastSignal = millis();
     } else {
-      if (!REMOTE_RC_6CH) {// handled by knob otherwise
+      // if no knob, signal only if behavior isn't running
+      if (behavior->running()) {
+        behavior->signal();
+        lastSignal = millis();
+      } else {
         halHeartbeatEnabled = false;
         curBehavior = (rcCmd[2] > REMOTE_RC_ZERO) ? curBehavior+1 : curBehavior+NUM_BEHAVIORS-1;
         curBehavior = curBehavior % NUM_BEHAVIORS;
@@ -189,7 +200,7 @@ void RemoteComputer::updateInterrupt() {
   } else if (computerPacket.cmd==CMD_SET_GAIT_BOUND) {
     behavior = &bound;
   } else if (computerPacket.cmd==CMD_SET_GAIT_WALK) {
-    behavior = &bound;
+    behavior = &walk;
   } else if (computerPacket.cmd==CMD_SIGNAL0 && millis() - lastSignal > REMOTE_SIGNAL_HYSTERESIS) {
     behavior->signal();
     lastSignal = millis();
