@@ -29,13 +29,13 @@ Peripheral *imu = &imuVN100;// imuVN100 / imuMPU6000
 // #include <Eigen.h>
 
 // This must be set per robot zeros must be checked before running!
-const float motZeros[8] = {0.631, 4.076, 1.852, 3.414, 1.817, 1.169, 1.078, 6.252}; //RML Mini
+const float motZeros[8] = {0.631, 4.076, 1.852, 3.414, 1.817, 5.500, 1.078, 6.252}; //RML Mini
 //const float motZeros[8] = {2.041, 1.616, 5.522, 2.484, 1.712, 5.356, 0.652, 2.017}; // MLab Mini
 
 // Behavior array: add behaviors here. First one in the array is the starting behavior.
 // Make sure the #include is in Remote.h
-const int NUM_BEHAVIORS = 4;
-Behavior *behaviorArray[NUM_BEHAVIORS] = {&bound, &walk, &dig, &pushwalk};
+const int NUM_BEHAVIORS = 5;
+Behavior *behaviorArray[NUM_BEHAVIORS] = {&dig, &bound, &walk, &pushwalk, &findSurf};
 
 // ======================================================================
 
@@ -44,8 +44,8 @@ SoftStart softStart;
 
 void debug() {
   // TEST
-  Serial1 << X.t << "\t";
-  Serial1 << controlTime << "\t";// Make sure < 1000 (assuming CONTROL_RATE = 1000)!
+  // Serial1 << X.t << "\t";
+  // Serial1 << controlTime << "\t";// Make sure < 1000 (assuming CONTROL_RATE = 1000)!
 
   // Serial1 << remoteRC.throttle << "\t";
 
@@ -68,12 +68,12 @@ void debug() {
   //   Serial1 << remoteComputer.computerPacket.params[i] << " ";
   // }
 
-  // // MOTORS ------------------------
-  // for (int i=0; i<NMOT; ++i) {
-  //   // UNCOMMENT THIS TO ZERO LEGS (Get raw pos when in jig; type into motZeros)
-  //   Serial1 << _FLOAT(M[i].getRawPosition(), 3) << "\t";
-  //   // Serial1 << M[i].getTorque() << "\t";
-  // }
+   // MOTORS ------------------------
+   for (int i=0; i<NMOT; ++i) {
+     // UNCOMMENT THIS TO ZERO LEGS (Get raw pos when in jig; type into motZeros)
+     Serial1 << _FLOAT(M[i].getPosition(), 3) << "\t";
+     // Serial1 << M[i].getTorque() << "\t";
+   }
 
   // // LEG -----------------------------
   // for (int i=0; i<4; ++i) {
@@ -108,7 +108,7 @@ void setup() {
   halInit();
 
   attachTimerInterrupt(0, controlLoop, CONTROL_RATE);
-  // attachTimerInterrupt(1, debug, 20);//comment out when not needed to reduce interrupts
+  attachTimerInterrupt(1, debug, 20);//comment out when not needed to reduce interrupts
 
   if (remote != &remoteComputer)
     enable(true);

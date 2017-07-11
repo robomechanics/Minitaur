@@ -60,15 +60,16 @@ void RemoteRC::updateInterrupt() {
 
   float rvstick = (rcCmd[0] - REMOTE_RC_ZERO);
   float rhstick = (rcCmd[3] - REMOTE_RC_ZERO);
-  speedDes = speedDesF.update(0.4 * rvstick);//HIGH SENSITIVITY
+  speedDes = speedDesF.update(0.4 * rvstick);//HIGH SENSITIVITY was 0.4 *
   // speedDes = speedDesF.update(0.2 * rvstick);// LOW SENSITIVITY
   // yawDes = yawDesF.update(0.05 * rhstick);
-  yawDes = yawDesF.update(0.03 * rhstick);
+  yawDes = yawDesF.update(0.03 * rhstick); //
   latDes = 0;//lhstick;
 
   if (REMOTE_RC_6CH) {
     vertDes = constrain(map(rcCmd[4], 5.41, 9.83, 0.05, 0.95), 0, 1);
     // knob: 6.32, 6.84, 7.37, 7.89, 8.95, 9.44 (5.16 when remote off)
+    int dummy = remoteKnob;
     if (rcCmd[5] > 5.5 && rcCmd[5] <= 6.55) remoteKnob = 1;
     else if (rcCmd[5] > 6.55 && rcCmd[5] <= 7.1) remoteKnob = 2;
     else if (rcCmd[5] > 7.1 && rcCmd[5] <= 7.65) remoteKnob = 3;
@@ -76,6 +77,9 @@ void RemoteRC::updateInterrupt() {
     else if (rcCmd[5] > 8.4 && rcCmd[5] <= 9.2) remoteKnob = 5;
     else if (rcCmd[5] > 9.2 && rcCmd[5] <= 10) remoteKnob = 6;
     else remoteKnob = 0;
+    if(remoteKnob != dummy){
+      lastSignal = millis();
+    }
   }
 
   // end behavior

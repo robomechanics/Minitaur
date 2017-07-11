@@ -36,7 +36,6 @@ float Interpolator::getSingleInterp(float * targets, float * times, int t) {
 }
 
 float Interpolator::getSinglePVTInterp(float * pos,float * vel, float * times, int t){
-  float posCurrent;
   for(int i=0;i<lengthTime;i++) vel[i] = vel[i]*0.001; //Rescale from [dist]/ms to [dist]/s
   index=0;
   for(int j=0;j<lengthTime;j++)

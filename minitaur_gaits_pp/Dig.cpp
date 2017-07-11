@@ -57,35 +57,35 @@ void Dig::update() {
     leg[i].setGain(ANGLE, kAng+0.1);
     leg[i].setGain(EXTENSION, kExt);
   }
-  leg[0].setGain(EXTENSION, kExt/4);
+  leg[2].setGain(EXTENSION, kExt/4);
 
   for(int i=0; i<4;++i){
     leg[i].setPosition(ANGLE, standAng);
     leg[i].setPosition(EXTENSION, standExt);
   }
-  leg[3].setPosition(EXTENSION, standExt/2);
+  leg[1].setPosition(EXTENSION, standExt/2);
   
   standExt = 2;  
   
   if (time<tReady){
-      leg[0].setPosition(ANGLE, standAng + (float)time*(sweep)/(float)(tReady-0));
-      leg[0].setPosition(EXTENSION, standExt + lift);
+      leg[2].setPosition(ANGLE, standAng + (float)time*(sweep)/(float)(tReady-0));
+      leg[2].setPosition(EXTENSION, standExt + lift);
   }
   else if(time>=(tReady) && time<(tReady+tLower)){
-      leg[0].setPosition(ANGLE, standAng + sweep);
-      leg[0].setPosition(EXTENSION, (standExt+lift) + (float)(time-tReady)*(-lift)/(float)(tLower));
+      leg[2].setPosition(ANGLE, standAng + sweep);
+      leg[2].setPosition(EXTENSION, (standExt+lift) + (float)(time-tReady)*(-lift)/(float)(tLower));
   }
   else if(time>=(tReady+tLower) && time<(tReady+tLower+tSweep)){
-      leg[0].setPosition(ANGLE, (standAng+sweep) + (float)(time-(tReady+tLower))*(-2*sweep)/(float)(tSweep));
-      leg[0].setPosition(EXTENSION, standExt);
+      leg[2].setPosition(ANGLE, (standAng+sweep) + (float)(time-(tReady+tLower))*(-2*sweep)/(float)(tSweep));
+      leg[2].setPosition(EXTENSION, standExt);
   }
   else if(time>=(tReady+tLower+tSweep) && time<(tReady+tLower+tSweep+tRaise)){
-      leg[0].setPosition(ANGLE, standAng - sweep);
-      leg[0].setPosition(EXTENSION, (standExt) + (float)(time-(tReady+tLower+tSweep))*(lift)/(float)(tRaise));
+      leg[2].setPosition(ANGLE, standAng - sweep);
+      leg[2].setPosition(EXTENSION, (standExt) + (float)(time-(tReady+tLower+tSweep))*(lift)/(float)(tRaise));
   }
   else{
-      leg[0].setPosition(ANGLE, (standAng - sweep) + (float)(time-(tReady+tLower+tSweep+tRaise))*(sweep)/(float)(tReturn));
-      leg[0].setPosition(EXTENSION, standExt + lift); 
+      leg[2].setPosition(ANGLE, (standAng - sweep) + (float)(time-(tReady+tLower+tSweep+tRaise))*(sweep)/(float)(tReturn));
+      leg[2].setPosition(EXTENSION, standExt + lift); 
   }
 //  
 //  Serial1.print(time);    

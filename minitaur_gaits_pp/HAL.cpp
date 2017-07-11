@@ -39,7 +39,7 @@ const int CONTROL_RATE = 400;
 #else//PWM
 const uint8_t pwmPin[] = {PE9, PE11, PE13, PE14, PA0, PD4, PD7, PD6, PB4, PB5};
 const uint8_t posPin[] = {PD12, PD13, PD14, PD15, PC6, PC7, PC8, PC9, PE2, PE3};
-// const uint8_t curPin[] = {PD8, PB2, PA13, PB1, PB0, PD5, PF9, PF10, PE4, PE5};
+const uint8_t curPin[] = {PD8, PB2, PA13, PB1, PB0, PD5, PF9, PF10, PE4, PE5};
 const uint8_t motorPort[8] = {0, 1, 2, 3, 4, 5, 6, 7};//MINI
 BlCon34 M[NMOT];
 const int CONTROL_RATE = 1000;
@@ -223,6 +223,15 @@ void halUpdate() {
 
   // LOGGING
   X.t = millis();
+  
+  // Motor current logging - only one motor at a time
+//  for (int i=0; i<NMOT; ++i) {
+//    float rawCur = 0;
+//    rawCur = map(pwmIn(curPin[motorPort[i]]), 0.1, 0.9, 0, 1);
+//    // convert to multiples of 0.1A? current01*3.3/(0.5e-3*40)*10 = 1650
+//    // bias should be about 825
+//    X.cur[i] = (uint16_t)(rawCur * 1650);
+//  }
 
   for (int i=0; i<NMOT; ++i) {
     X.q[i] = M[i].getPosition();

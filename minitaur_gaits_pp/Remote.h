@@ -16,6 +16,7 @@
 #include "Walk.h"
 #include "Dig.h"
 #include "pushWalk.h"
+#include "FindSurface.h"
 // ==================================
 
 extern Behavior *behavior;
