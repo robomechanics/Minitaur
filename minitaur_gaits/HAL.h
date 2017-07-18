@@ -50,6 +50,7 @@ struct LogVector {
   // Motor positions
   volatile float q[8];//60
   // Motor currents
+  // volatile float magx, magy, magz; // 72 // for debug only 
   volatile float torque[8];//92
   // forward velocity
   volatile float xd;//96

@@ -15,13 +15,21 @@ IMUVN100 imuVN100;
 
 void IMUVN100::begin() {
   vn100.init(PB12);
+  //delay(1000);
+  // nvicEnable(DMA1_Channel5_IRQn, 1);
+  // vn100.OSIinit(TIMER17, 50);
 }
 
+//FOR NORMAL OPERATION
 void IMUVN100::updateInterrupt() {
   float yaw=0, roll=0, pitch=0, _yawdot=0, _rolldot=0, _pitchdot=0;
-  vn100.get(yaw, pitch, roll, _yawdot, _pitchdot, _rolldot);
+  errId = vn100.get(yaw, pitch, roll, _yawdot, _pitchdot, _rolldot); //NON-async
+  // errId = vn100.getAsync(yaw, pitch, roll, _yawdot, _pitchdot, _rolldot);
+  
+
   // make sure all of the response header is what is expected. weird noise issue upside down
-  if (vn100.resphead[0] == 0 && vn100.resphead[1] == 1 && vn100.resphead[2] == 240 && vn100.resphead[3] == 0) {
+  // if (vn100.resphead[0] == 0 && vn100.resphead[1] == 1 && vn100.resphead[2] == 240 && vn100.resphead[3] == 0) {
+  if (errId ==0 || errId ==14 || errId ==15 || errId ==16 || errId ==17 || errId ==21) {
     X.yaw = yaw;
     X.roll = pitch;
     X.pitch = roll;
@@ -29,7 +37,31 @@ void IMUVN100::updateInterrupt() {
     X.pitchdot = _rolldot;
     X.yawdot = _yawdot;
   }
+    // else{
+    // uint8_t crcConfig[7] = {0,0,0,1,1,3,0};
+    // vn100.writeReg(VN_REG_COM_PRTCL_CNTRL, 7, crcConfig);
+  // }
+ // vn100.updateAsync();
 }
+//FOR DEBUG
+// void IMUVN100::updateInterrupt() {
+//   float yaw=0, roll=0, pitch=0, _yawdot=0, _rolldot=0, _pitchdot=0; float magx = 0; float magy = 0; float magz = 0;
+//   errId = vn100.getWMag(yaw, pitch, roll, _yawdot, _pitchdot, _rolldot, magx,magy,magz);
+
+//   // make sure all of the response header is what is expected. weird noise issue upside down
+//   // if (vn100.resphead[0] == 0 && vn100.resphead[1] == 1 && vn100.resphead[2] == 240 && vn100.resphead[3] == 0) {
+//   if (errId ==0 || errId ==14 || errId ==15 || errId ==16 || errId ==17 || errId ==21) {
+//     X.yaw = yaw;
+//     X.roll = pitch;
+//     X.pitch = roll;
+//     X.rolldot = _pitchdot;
+//     X.pitchdot = _rolldot;
+//     X.yawdot = _yawdot;
+//     X.magx = magx;
+//     X.magy = magy;
+//     X.magz = magz;
+//   }
+// }
 
 // ===== To save compile time, if using VN100, comment out everything below this ======
 

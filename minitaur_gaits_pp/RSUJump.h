@@ -3,6 +3,13 @@
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Turner Topping
+ * @file RSUJump.h
+ * @author Turner Topping
+ * @date July 2017
+ * @breif Right-Side Up Jump header file
+ *
+ * Header file for the right side up jump
+ * behavior
  */
 #ifndef RSUJump_h
 #define RSUJump_h
@@ -13,16 +20,16 @@
 
 enum RSUJumpMode {
   RSUJ_STAND, RSUJ_WAIT, RSUJ_FRONTHOP, RSUJ_PREJUMP, RSUJ_LEAP, 
-  RSUJ_RETRACT, RSUJ_TUCKED, RSUJ_AB, RSUJ_LANDED
+  RSUJ_RETRACT, RSUJ_TUCKED, RSUJ_AB, RSUJ_LANDED, RSUJ_POSTLANDED
 };
 
 class RSUJump : public Behavior {
 public: 
 	RSUJump() : mode(RSUJ_STAND), tstart(0) {}
 
-	void begin() {mode = RSUJ_WAIT; tstart = X.t;}
+	void begin(); 
 	void update();
-	bool running() { return (mode!= RSUJ_STAND ); }
+	bool running() { return !(mode == RSUJ_STAND || mode==RSUJ_POSTLANDED); }
 	void end() { if (mode == RSUJ_WAIT) mode = RSUJ_STAND;}
 	void signal() {}
 
@@ -32,7 +39,8 @@ public:
   bool tddetr;
   float tRet;
   float tEventRear;
-
+  float ex0;
+  float an0;
   uint32_t tstart;
   float tEvent;
   float uroll;
@@ -55,3 +63,4 @@ public:
 extern RSUJump rsuJump;
 
 #endif
+

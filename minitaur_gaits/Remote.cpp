@@ -3,6 +3,10 @@
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * Written by Avik De <avik@ghostrobotics.io>
+ * @file Remote.cpp 
+ * @author Avik De (avik@ghostrobotics.io)
+ * @date July, 2017
+ *   
  */
 #include "Remote.h"
 #include "HAL.h"
@@ -10,22 +14,28 @@
 // TODO: filter toggle switch to avoid noise
 
 // globals set by the remote
-float speedDes = 0, yawDes = 0, latDes = 0, vertDes = 0;
-uint8_t remoteKnob = 0;// 1--6
+float speedDes = 0; ///< Magnitude of surge on body 
+float yawDes = 0;  ///< Magnitude of desired yawing moment
+float latDes = 0;  ///< Magnitude of desired lateral movement
+float vertDes = 0; ///< Desired height during bounding and walking behaviors
+uint8_t remoteKnob = 0;///< Current value of remote knob (1--6)
 RemoteRC remoteRC;
 RemoteComputer remoteComputer;
 
 // locals
 int curBehavior = 0;
 Behavior *behavior = behaviorArray[curBehavior];
-
-// function to programmatically change behavior
+/**
+ * Function to programmatically change behavior
+ */
 void activateBehavior(Behavior *behav) {
   behavior = behav;
   behavior->begin();
 }
 
-
+/**
+ * Initializes the RemoteRC class. 
+ */
 void RemoteRC::begin() {
   // RC receiver
   for (int i=0; i<NRECPINS; ++i)
@@ -34,6 +44,7 @@ void RemoteRC::begin() {
   // Low pass user desired speed
   speedDesF.init(0.999, CONTROL_RATE, DLPF_SMOOTH);
   yawDesF.init(0.5, CONTROL_RATE, DLPF_SMOOTH);
+  vertDesF.init(0.5, CONTROL_RATE, DLPF_SMOOTH); 
 }
 
 void RemoteRC::updateInterrupt() {
@@ -55,27 +66,57 @@ void RemoteRC::updateInterrupt() {
     throttleChangeCounter = 0;
   else
     throttleChangeCounter++;
-  if (throttleChangeCounter > CONTROL_RATE/3)// debounce
+  if (throttleChangeCounter > CONTROL_RATE/10)// debounce
     throttle = throttleMeasurement;
 
   float rvstick = (rcCmd[0] - REMOTE_RC_ZERO);
   float rhstick = (rcCmd[3] - REMOTE_RC_ZERO);
-  speedDes = speedDesF.update(0.4 * rvstick);//HIGH SENSITIVITY
-  // speedDes = speedDesF.update(0.2 * rvstick);// LOW SENSITIVITY
-  // yawDes = yawDesF.update(0.05 * rhstick);
+  float lvstick = constrain(map(rcCmd[4], 5.41, 9.83, 0.0, 1.3), 0, 1.3);
+  // speedDes = speedDesF.update(0.7 * rvstick);//HIGH SENSITIVITY
+  speedDes = speedDesF.update(0.4 * rvstick);//MEDIUM SENSITIVITY
+  // speedDes = speedDesF.update(0.3 * rvstick);//LOW SENSITIVITY
   yawDes = yawDesF.update(0.03 * rhstick);
+  vertDes = vertDesF.update(lvstick);
   latDes = 0;//lhstick;
 
   if (REMOTE_RC_6CH) {
-    vertDes = constrain(map(rcCmd[4], 5.41, 9.83, 0.05, 0.95), 0, 1);
+    //vertDes = constrain(map(rcCmd[4], 5.41, 9.83, 0.0, 1.0), 0, 1);
     // knob: 6.32, 6.84, 7.37, 7.89, 8.95, 9.44 (5.16 when remote off)
-    if (rcCmd[5] > 5.5 && rcCmd[5] <= 6.55) remoteKnob = 1;
-    else if (rcCmd[5] > 6.55 && rcCmd[5] <= 7.1) remoteKnob = 2;
-    else if (rcCmd[5] > 7.1 && rcCmd[5] <= 7.65) remoteKnob = 3;
-    else if (rcCmd[5] > 7.65 && rcCmd[5] <= 8.4) remoteKnob = 4;
-    else if (rcCmd[5] > 8.4 && rcCmd[5] <= 9.2) remoteKnob = 5;
-    else if (rcCmd[5] > 9.2 && rcCmd[5] <= 10) remoteKnob = 6;
-    else remoteKnob = 0;
+      if (rcCmd[5] > 5.5 && rcCmd[5] <= 6.55){
+        rk1c = rk1c+1; rk2c = 0; rk3c = 0; rk4c = 0; rk5c = 0; rk6c =0;
+        // remoteKnob = 1;
+      }else if (rcCmd[5] > 6.55 && rcCmd[5] <= 7.1){
+        rk1c = 0; rk2c = rk2c+1; rk3c = 0; rk4c = 0; rk5c = 0; rk6c =0;
+        // remoteKnob = 2;
+      }else if (rcCmd[5] > 7.1 && rcCmd[5] <= 7.65){
+         rk1c = 0;  rk2c = 0; rk3c = rk3c+1; rk4c = 0; rk5c = 0; rk6c =0;
+       //remoteKnob = 3;
+      }else if (rcCmd[5] > 7.65 && rcCmd[5] <= 8.4){
+        rk1c = 0; rk2c = 0; rk3c = 0; rk4c = rk4c+1;  rk5c = 0; rk6c =0;
+       // remoteKnob = 4;
+      }else if (rcCmd[5] > 8.4 && rcCmd[5] <= 9.2){
+        rk1c = 0; rk2c = 0; rk3c = 0; rk4c = 0;  rk5c = rk5c+1; rk6c =0;
+       // remoteKnob = 5;
+      }else if (rcCmd[5] > 9.2 && rcCmd[5] <= 10){
+        rk1c = 0; rk2c = 0; rk3c = 0; rk4c = 0;  rk5c = 0; rk6c =rk6c+1;
+       // remoteKnob = 6;
+      }else{
+        rk1c = 0; rk2c = 0; rk3c = 0; rk4c = 0;  rk5c = 0; rk6c =0;
+        // remoteKnob = 0;
+      }
+      if(rk1c>knobLim){
+        remoteKnob = 1;
+      }else if(rk2c>knobLim){
+        remoteKnob = 2;
+      }else if(rk3c>knobLim){
+        remoteKnob=3;
+      }else if(rk4c>knobLim){
+        remoteKnob = 4;
+      }else if(rk5c>knobLim){
+        remoteKnob = 5;
+      }else if(rk6c > knobLim){
+        remoteKnob =6;
+      }
   }
 
   // end behavior
@@ -102,11 +143,11 @@ void RemoteRC::updateLoop() {
     }
   }
   // signal / cycle through behaviors
-  if (millis() > 2000 && fabsf(rcCmd[2] - REMOTE_RC_ZERO) > 1.3 && fabsf(rcCmd[2] - REMOTE_RC_ZERO) < 5 && millis() - lastSignal > REMOTE_SIGNAL_HYSTERESIS) {
+  if (millis() > 2000 && fabsf(rcCmd[2] - REMOTE_RC_ZERO) > 1.3 && fabsf(rcCmd[2] - REMOTE_RC_ZERO) < 3 && millis() - lastSignal > REMOTE_SIGNAL_HYSTERESIS) {
     // the "if" above is true if the left stick horiz is pushed as a switch
     if (REMOTE_RC_6CH) {
       // Knob => this doesn't interfere with behavior selection
-      behavior->signal();
+      behavior->signal((rcCmd[2] > REMOTE_RC_ZERO) ? 1 : 0);// left = signal 0, right = signal 1
       lastSignal = millis();
     } else {
       // if no knob, signal only if behavior isn't running
@@ -130,7 +171,9 @@ void RemoteRC::updateLoop() {
   }
 }
 
-// Empty behavior for computer to set positions/openloop directly
+/**
+ * Empty behavior for computer to set positions/openloop directly
+ */
 class DoNothing : public Behavior {
 public:
   void begin() {}

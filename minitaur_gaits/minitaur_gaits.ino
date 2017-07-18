@@ -29,12 +29,12 @@ Peripheral *imu = &imuVN100;// imuVN100 / imuMPU6000
 // #include <Eigen.h>
 
 // This must be set per robot zeros must be checked before running!
-const float motZeros[8] = {1.953, 4.426, 2.177, 0.316, 1.769, 5.122, 4.356, 4.518};//Penn Mini
+const float motZeros[8] = {0.631, 4.076, 1.852, 3.414, 1.817, 5.500, 1.078, 6.252}; //RML Mini
 
 // Behavior array: add behaviors here. First one in the array is the starting behavior.
 // Make sure the #include is in Remote.h
-const int NUM_BEHAVIORS = 2;
-Behavior *behaviorArray[NUM_BEHAVIORS] = {&bound, &walk};
+const int NUM_BEHAVIORS = 4;
+Behavior *behaviorArray[NUM_BEHAVIORS] = {&bound, &walk, &frontFlip, &imuReset};
 
 // ======================================================================
 

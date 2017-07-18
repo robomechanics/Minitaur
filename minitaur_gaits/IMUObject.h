@@ -17,6 +17,7 @@ class IMUVN100 : public Peripheral {
 public:
   VN100 vn100;
   uint8_t errId;
+
   IMUVN100() : vn100(SPI_2), errId(0) {}
   // called from setup()
   virtual void begin();

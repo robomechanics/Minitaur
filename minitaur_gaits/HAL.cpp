@@ -164,7 +164,8 @@ void halInit() {
 
   // Try to init openlog (don't stop if no SD card)
   openLog.begin(115200, sizeof(X), (void *)&X, 0);
-  openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,u0,u1,u2,u3,u4,u5,u6,u7,xd,Vb,mo", "IffffffffffffffffffffffffB");
+  openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,u0,u1,u2,u3,u4,u5,u6,u7,xd,Vb,mo", "IfffffffffffffffffffffffffB");
+  // openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,magx,magy,magz,u3,u4,u5,u6,u7,xd,Vb,mo", "IffffffffffffffffffffffffB");
 
   // Hardware setup done
   digitalWrite(led0, HIGH);
@@ -212,6 +213,7 @@ void halUpdate() {
 
   // IMU
   imu->updateInterrupt();
+
   // Vsource
   // 3.3V, Volt div 470 & 10k, 12bit. So 3.3/4096*(10470/470) = 0.01794745262
   // empirical tuning: 
@@ -235,7 +237,8 @@ void halUpdate() {
     // convert to multiples of 0.1A? current01*3.3/(0.5e-3*40)*10 = 1650
     // bias should be about 825
     // X.cur[i] = (uint16_t)(rawCur * 1650);
-    X.torque[i] = M[i].getTorque();
+
+    X.torque[i] = M[i].getTorque(); //INCLUDE IN NORMAL OPERATION
   }
   for (int i=0; i<4; ++i) {
     // NOTE ux>0 when leg pushed "back", uz>0 when pushed "up"
@@ -245,6 +248,7 @@ void halUpdate() {
   if (X.t - lastOLwrite > 9) {
     // openLog.write((const uint8_t *)&X);
     lastOLwrite = X.t;
+    X.mode = ((IMUVN100 *)imu)->errId;
     openLog.write();
   }
 

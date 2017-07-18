@@ -14,6 +14,7 @@
 
 #include "VirtualLeg.h"
 #include "ReorientableBehavior.h"
+#include <VN100.h>
 
 class Bound;
 
@@ -87,7 +88,7 @@ public:
     // low pass by averaging from and rear
     float newSpeed = 0.5 * (front.speed + rear.speed);
     // if (fabsf(newSpeed - X.xd) < 0.2)
-      X.xd = newSpeed;
+    X.xd = newSpeed;
     X.mode = (uint8_t)front.mode + (uint8_t)((rear.mode)<<2);
   }
   bool running() {

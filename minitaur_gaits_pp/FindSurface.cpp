@@ -47,7 +47,6 @@ void FindSurface::update() {
   
   for (int i=0; i<4; ++i) {
     float old_ur = ur;
-    float old_uth = uth;
     leg[i].getToeForce(ur, uth);
 
     if (surfFound[i]){

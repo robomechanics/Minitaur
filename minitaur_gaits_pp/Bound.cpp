@@ -19,24 +19,24 @@
 Bound bound;
 
 const BoundParameters minitaurBoundParams = {
-  .angNom = {0.02, 0.19},// increased for big toes
+  .angNom = {0.05, 0.1},// increased for big toes{0.0, 0.15}
   //{-0.01, 0.17}, //front/rear
   // hybrid system params
   // tstance is now only used for the FA kStrideLength estimation, not for VH
   .tstance = 110, .tdExt = 1.6,
   // stance virtual spring params
-  .kSpring = 0.5, .kVert = 0.16, .kOffset = 0.0,
+  .kSpring = 0.5, .kVert = 0.14, .kOffset = 0.0,
   // FA (or flight) params
   .kAngStance = 0.3, 
   .kExtFltP = 0.4, .kExtFltD = 0.005,
   .kAngFltP = 1.5, .kAngFltD = 0.01,
-  .kNomLegRad = 0.17,
+  .kNomLegRad = 0.16,//0.165,
   // Attitude control params
-  .kRoll = 2.0, .kRollDot = 0.05,
+  .kRoll = 2.0, .kRollDot = 0.02,
   // Retraction params
   .tretract = 100, .extMin = 0.6,
   // Stand params
-  .kExtStand = 0.1, .kAngStand = 0.6, .kAngStandD = 0.03
+  .kExtStand = 0.5, .kAngStand = 1.4, .kAngStandD = 0.02
 };
 
 // --------------
@@ -106,13 +106,33 @@ bool BoundLeg::update() {
     // TEST
     float phaseTerm = phaseControlGain * arm_sin_f32(X.pitchdot);
 
-    // Use vertDes to add energy (may be helpful to compensate for lower Vbatt; or do that automatically)
-    float offset = p->kOffset + map(vertDes, 0.0, 1.0, 0.0, 0.3);
-
+    bool shouldLiftOff = ext > pBound->flightPos;
     // this is only approximate: the ext is in radians, not m, and also we used omega=1,
     // but at least monotonic with the correct limits
     float phase = -atan2f((ext - p->tdExt), -extVel);
-    float uvert = p->kSpring * (pBound->flightPos - ext) - p->kVert * arm_cos_f32(phase) + offset + phaseTerm * arm_sin_f32(phase);
+    // Use vertDes to add energy (may be helpful to compensate for lower Vbatt; or do that automatically)
+    float kOffset = p->kOffset + map(vertDes, 0.0, 1.0, 0.0, 0.15);
+    float kVert = p->kVert;
+    // front-back leap
+    if (signalState == SIGNAL_LEAP_STANCE) {
+      phase = -atan2f((ext - (p->tdExt+0.3)), -extVel);
+      shouldLiftOff = ext > pBound->flightPos+0.3;
+      // kRoll =20;
+      // kRollDot = 2;
+      if (bFront) {
+        if (phase > 0.2) // fraction through stance
+          kOffset = 0.7; // SetOpenLoop for bFront
+        angDes += 0.2; //0.26//this should be a function of speed? // adds x radians to the already calculated desired 
+      } else {
+        kVert = 0.25;
+        if (phase>0.2){
+          kOffset = 0.5; //rear leg offset 
+        }
+       angDes += 0.35;
+      }
+    }
+    // Vertical controller
+    float uvert = p->kSpring * (pBound->flightPos - ext) - kVert * arm_cos_f32(phase) + kOffset + phaseTerm * arm_sin_f32(phase);
     // Roll when yawing
     float rollDes = 0;//constrain(0.4 * fabsf(X.xd) * yawDes, -0.1, 0.1);
     float uroll = p->kRoll * (X.roll - rollDes) + p->kRollDot * X.rolldot;
@@ -122,13 +142,17 @@ bool BoundLeg::update() {
     // setOpenLoop(ANGLE, 0, 0);
     // // FA: very loose spring
     angDes += asinf(pBound->kStrideLength * speedDes);
-    setOpenLoop(ANGLE, p->kAngStance * (angDes - getPosition(ANGLE)), 0);
+    float ang = getPosition(ANGLE);
+    float hipTorqueDes = p->kAngStance * (angDes - ang);
+    // TEST new hipTorque to direct acc through hip. instead of scaling by just put a gain
+    hipTorqueDes += 0.2 * arm_sin_f32(2*(ang + X.pitch)) * uvert;
+    setOpenLoop(ANGLE, hipTorqueDes, 0);
     // TODO implement diff controller on two legs (angles) to keep them active synced together
     
     speedAccum += getSpeed(X.pitch);
 
     // Liftoff
-    if (ext > pBound->flightPos && extVel > 0) {//X.t - tTD > p->tstance) {
+    if (shouldLiftOff && extVel > 0) {//X.t - tTD > p->tstance) {
       mode = FLIGHT;
       tLO = X.t;
       // LP filter this
@@ -139,25 +163,24 @@ bool BoundLeg::update() {
       waitForTD = false;
     }
   } else if (mode == FLIGHT) {
-    // if (signalState == SIGNAL_LEAP_LAND) {
-    //   // TODO legs track absolute angle on leap land
-    //   // if (X.t-tLO<250){
-    //   //     flightPos -= 0.75;
-    //   //     tdPos -= 0.95;
-    //   //     //if(bFront) angDes  = -constrain(X.pitch,-1,1)-PI/2;
-    //   //   }else if(X.t-tLO>=250 && X.t-tLO<300){
-    //   //     tdPos-=0.95;
-    //   //     angDes += (-0.15-constrain(X.pitch, -1, 1));
-    //   //   }else{
-    //   //     angDes += (-0.15-constrain(X.pitch, -1, 1));
-    //   //   }
-    //   angDes += (-0.1);
-    // } else {
-    //   // test abs leg angle flight
-    //   // angDes += (-constrain(X.pitch, -1, 1));
-    // }
+    if (signalState == SIGNAL_LEAP_LAND) {
+      // TODO legs track absolute angle on leap land
+      // if (X.t-tLO<250){
+      //     flightPos -= 0.75;
+      //     tdPos -= 0.95;
+      //     //if(bFront) angDes  = -constrain(X.pitch,-1,1)-PI/2;
+      //   }else if(X.t-tLO>=250 && X.t-tLO<300){
+      //     tdPos-=0.95;
+      //     angDes += (-0.15-constrain(X.pitch, -1, 1));
+      //   }else{
+      //     angDes += (-0.15-constrain(X.pitch, -1, 1));
+      //   }
+      angDes += -0.1 - X.pitch;
+    } else {
+      // test abs leg angle flight
+      // angDes += (-constrain(X.pitch, -1, 1));
+    }
 
-    // TODO retraction
     // TODO differential extension for simultaneous touchdown based on body roll?
     float frac = map(X.t, tLO, tLO + p->tretract, 0.0, 1.0);
     if (frac < 0.6) {
@@ -175,10 +198,10 @@ bool BoundLeg::update() {
 
     // FOREAFT
     // get to the neutral point, servo around it
-    // if(signalState != SIGNAL_LEAP_LAND){
+    if(signalState != SIGNAL_LEAP_LAND){
     // this gain to speedErr seems like it doesn't need to change for other robots
     angDes += asinf(pBound->kStrideLength * (-X.xd + 0.3 * pBound->speedErr));
-    // }
+    }
     setGain(ANGLE, p->kAngFltP, p->kAngFltD);
     // 
     // yawDes is between +/- 1. Add some yaw damping
@@ -189,20 +212,20 @@ bool BoundLeg::update() {
     { 
       mode = STANCE;
       tTD = X.t;
-      // if (signalState == SIGNAL_LEAP_LAND) // advance state if not NONE
-      //   signalState = SIGNAL_NONE;
-      // else if (signalState == SIGNAL_QUEUE) {
-      //   signalState = SIGNAL_LEAP_STANCE;
-      //   // this flag is used to make the rear start its leap
-      //   return true;
-      // }
+      if (signalState == SIGNAL_LEAP_LAND) // advance state if not NONE
+        signalState = SIGNAL_NONE;
+      else if (signalState == SIGNAL_QUEUE) {
+        signalState = SIGNAL_LEAP_STANCE;
+        // this flag is used to make the rear start its leap
+        return true;
+      }
     }
   } else {
     // stand
     setGain(EXTENSION, p->kExtStand);
     setGain(ANGLE, p->kAngStand, p->kAngStandD);
     setPosition(ANGLE, angDes, 0);
-    setPosition(EXTENSION, pBound->flightPos, 0);
+    setPosition(EXTENSION, pBound->flightPos-0.6, 0);
     X.xd = 0;
   }
   return false;
