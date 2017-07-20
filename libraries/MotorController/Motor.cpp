@@ -164,7 +164,15 @@ void BlCon34::enable(bool flag) {
 }
 
 float BlCon34::getRawPosition() {
-  return map(pwmIn(inPin), 0.1, 0.9, 0, TWO_PI);
+  float inp = pwmIn(inPin);
+  if (inp == 0.0) {
+    // try to avoid read errors where pwmIn returns 0
+    return prevPos;
+  }
+  else {
+    prevPos = map(inp, 0.1, 0.9, 0, TWO_PI);
+    return prevPos;
+  }
 }
 
 void BlCon34::sendOpenLoop(float val) {

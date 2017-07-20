@@ -7,6 +7,8 @@
 #ifndef Behavior_h
 #define Behavior_h
 
+#include <stdint.h>
+
 /** @addtogroup Behavior
  *  @{
  */
