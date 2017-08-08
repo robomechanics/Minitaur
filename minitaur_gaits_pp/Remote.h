@@ -25,8 +25,6 @@
 #include "Bound.h"
 #include "Walk.h"
 #include "Dig.h"
-#include "FindSurface.h"
-#include "pushWalk.h"
 #include "IMUReset.h"
 #include "FrontFlip.h"
 // ==================================
@@ -155,4 +153,3 @@ extern RemoteComputer remoteComputer;
 // =================================================
 
 #endif
-

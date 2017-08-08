@@ -82,7 +82,6 @@ void RemoteRC::updateInterrupt() {
   if (REMOTE_RC_6CH) {
     //vertDes = constrain(map(rcCmd[4], 5.41, 9.83, 0.0, 1.0), 0, 1);
     // knob: 6.32, 6.84, 7.37, 7.89, 8.95, 9.44 (5.16 when remote off)
-    int dummy = remoteKnob;
       if (rcCmd[5] > 5.5 && rcCmd[5] <= 6.55){
         rk1c = rk1c+1; rk2c = 0; rk3c = 0; rk4c = 0; rk5c = 0; rk6c =0;
         // remoteKnob = 1;
@@ -117,9 +116,6 @@ void RemoteRC::updateInterrupt() {
         remoteKnob = 5;
       }else if(rk6c > knobLim){
         remoteKnob =6;
-      }
-      if(remoteKnob != dummy){
-        lastSignal = millis();
       }
   }
 
@@ -327,5 +323,4 @@ void RemoteComputer::updateLoop() {
 //     speedDes = speedDesF.update(nunchuck.joy[1] * speedScale);
 //   }
 // }
-
 

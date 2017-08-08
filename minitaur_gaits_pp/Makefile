@@ -2,6 +2,7 @@
 
 # MODIFY THESE
 PORT=COM4
+
 # mblc0.5.2: koduino:stm32:f303v:hse=8m,bootloader=stm32loader
 # grmbm: koduino:stm32:f446:bootloader=stm32loader
 # grbl*: koduino:stm32:f301:flashsize=32k,hse=8m,bootloader=stlink

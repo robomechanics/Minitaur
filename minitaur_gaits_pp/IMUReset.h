@@ -26,4 +26,3 @@ public:
 extern IMUReset imuReset;
 
 #endif
-

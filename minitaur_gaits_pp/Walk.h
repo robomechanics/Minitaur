@@ -11,16 +11,20 @@
 #include "ReorientableBehavior.h"
 
 enum WalkMode {
-  WM_SIT = 0, /*WM_WAIT, */WM_WALK, WM_REORIENT
+  WM_SIT = 0, WM_WALK, WM_REORIENT
 };
 
 class Walk : public ReorientableBehavior {
 public:
+  bool remoteEnableSignal;
   WalkMode mode;
   // Some timestamps to keep track of
   uint32_t tstart;
   uint32_t lastUpdate;
+  uint32_t relaxTimer;
   uint32_t tLO, tTD;
+  bool posRollMode = false;
+  uint32_t posRollTimer = 0;
   // State for taking steps
   int flightLeg, nextFlightLeg, stepLeg, nextStepLeg;
   // LO PEP (state to decide touchdown angle)
@@ -36,7 +40,7 @@ public:
 
   SignalState signalState;
 
-  Walk() : mode(WM_SIT), tstart(0), lastUpdate(0), signalState(SIGNAL_NONE) {
+  Walk() : remoteEnableSignal(false), mode(WM_SIT), tstart(0), lastUpdate(0), relaxTimer(0), signalState(SIGNAL_NONE) {
     init();
     speedFilt.init(0.999, CONTROL_RATE, DLPF_SMOOTH);
   }
@@ -58,19 +62,22 @@ public:
     tLO = 0;
     tTD = 0;
   }
-  // From base class
-  void begin() {
+  void walk() {
     MinitaurLeg::useLengths = false;
-    mode = WM_WALK;//WM_WAIT;
+    mode = WM_WALK;
     tstart = X.t;
   }
+  void sit() {
+    mode = WM_SIT;
+    tstart = X.t;
+  }
+  // From base class
+  void begin() { mode = WM_WALK; }//remoteEnableSignal = true; }
   void update();
   bool running() {
-    return !(mode == WM_SIT);
+    return !(mode == WM_SIT);//remoteEnableSignal;//
   }
-  void end() {
-    mode = WM_SIT;
-  }
+  void end() { mode = WM_SIT; }//remoteEnableSignal = false; }
   void signal(uint8_t sig);
 };
 extern Walk walk;

@@ -15,6 +15,9 @@ IMUVN100 imuVN100;
 
 void IMUVN100::begin() {
   vn100.init(PB12);
+
+  nvicEnable(DMA1_Channel5_IRQn, 1); //For Async
+  vn100.OSIinit(TIMER17, 50);
   //delay(1000);
   // nvicEnable(DMA1_Channel5_IRQn, 1);
   // vn100.OSIinit(TIMER17, 50);
@@ -23,12 +26,16 @@ void IMUVN100::begin() {
 //FOR NORMAL OPERATION
 void IMUVN100::updateInterrupt() {
   float yaw=0, roll=0, pitch=0, _yawdot=0, _rolldot=0, _pitchdot=0;
-  errId = vn100.get(yaw, pitch, roll, _yawdot, _pitchdot, _rolldot); //NON-async
+  // errId = vn100.get(yaw, pitch, roll, _yawdot, _pitchdot, _rolldot); //NON-async
+  errId = vn100.getGlobal(yaw, pitch, roll, _yawdot, _pitchdot, _rolldot); //Update from global buffers
   // errId = vn100.getAsync(yaw, pitch, roll, _yawdot, _pitchdot, _rolldot);
   
 
   // make sure all of the response header is what is expected. weird noise issue upside down
   // if (vn100.resphead[0] == 0 && vn100.resphead[1] == 1 && vn100.resphead[2] == 240 && vn100.resphead[3] == 0) {
+  // if(errId!=0){
+  //   Serial1<<errId<<'\n';
+  // }
   if (errId ==0 || errId ==14 || errId ==15 || errId ==16 || errId ==17 || errId ==21) {
     X.yaw = yaw;
     X.roll = pitch;
@@ -41,7 +48,7 @@ void IMUVN100::updateInterrupt() {
     // uint8_t crcConfig[7] = {0,0,0,1,1,3,0};
     // vn100.writeReg(VN_REG_COM_PRTCL_CNTRL, 7, crcConfig);
   // }
- // vn100.updateAsync();
+ vn100.update240Async();
 }
 //FOR DEBUG
 // void IMUVN100::updateInterrupt() {
