@@ -57,13 +57,13 @@ void Dig::update() {
     leg[i].setGain(ANGLE, kAng+0.1);
     leg[i].setGain(EXTENSION, kExt);
   }
-  leg[2].setGain(EXTENSION, kExt/4);
+  leg[2].setGain(EXTENSION, kExt/3);
 
   for(int i=0; i<4;++i){
     leg[i].setPosition(ANGLE, standAng);
     leg[i].setPosition(EXTENSION, standExt);
   }
-  leg[1].setPosition(EXTENSION, standExt/2);
+  leg[1].setPosition(EXTENSION, standExt/4);
   
   standExt = 2;  
   
