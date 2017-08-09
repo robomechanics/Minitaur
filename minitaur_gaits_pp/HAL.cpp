@@ -40,7 +40,7 @@ const int CONTROL_RATE = 400;
 const uint8_t pwmPin[] = {PE9, PE11, PE13, PE14, PA0, PD4, PD7, PD6, PB4, PB5};
 const uint8_t posPin[] = {PD12, PD13, PD14, PD15, PC6, PC7, PC8, PC9, PE2, PE3};
 // const uint8_t curPin[] = {PD8, PB2, PA13, PB1, PB0, PD5, PF9, PF10, PE4, PE5};
-const uint8_t motorPort[8] = {0, 1, 2, 3, 4, 5, 6, 7};//MINI
+const uint8_t motorPort[9] = {0, 1, 2, 3, 4, 5, 6, 7, 8};//MINI
 BlCon34 M[NMOT];
 const int CONTROL_RATE = 1000;
 #endif
@@ -178,6 +178,7 @@ void halUpdate() {
     leg[i].update();
   // for PWM the leg update will update this
   // for bus, autoUpdate is false, so halUpdate() updates motors
+  M[8].updateTail();
 #if USE_BUS
   // update one from each master at a time
   for (uint8_t i=0; i<4; ++i) {

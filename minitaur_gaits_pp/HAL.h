@@ -20,7 +20,7 @@ extern float ux[4], uz[4];
 // defined in .ino
 extern const float motZeros[];
 
-const int NMOT = 8;
+const int NMOT = 9;
 
 // MOTORS
 #if USE_BUS

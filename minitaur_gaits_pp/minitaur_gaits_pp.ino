@@ -30,15 +30,16 @@ Peripheral *imu = &imuVN100;// imuVN100 / imuMPU6000
 
 // This must be set per robot zeros must be checked before running!
 //const float motZeros[8] = {2.504, 3.435, 2.335, 3.076, 6.067, 4.896, 6.190, 1.493}; // Carbon FiberTaur
-const float motZeros[8] = {2.570, 3.167, 3.777, 3.853, 2.183, 1.556, .675, 2.679}; // RML Ellie
+const float motZeros[9] = {2.570, 3.167, 3.777, 3.853, 2.183, 1.556, .675, 2.679, 3.601}; // RML Ellie with Tail
+//const float motZeros[8] = {2.570, 3.167, 3.777, 3.853, 2.183, 1.556, .675, 2.679}; // RML Ellie
 //const float motZeros[8] = {0.631, 4.076, 1.852, 3.414, 1.817, 5.500, 1.078, 6.252}; //RML Odie
 
 
 
 // Behavior array: add behaviors here. First one in the array is the starting behavior.
 // Make sure the #include is in Remote.h
-const int NUM_BEHAVIORS = 3;
-Behavior *behaviorArray[NUM_BEHAVIORS] = {&walk, &bound, &dig};
+const int NUM_BEHAVIORS = 6;
+Behavior *behaviorArray[NUM_BEHAVIORS] = {&bound, &kick, &walk, &tail, &dig, &frontFlip};
 
 // ======================================================================
 
@@ -96,10 +97,18 @@ void controlLoop() {
   // "soft start"
   if ((behavior == &bound || behavior == &walk) && softStart.running()) {
     float behavExtDes = (behavior == &bound) ? 1.5 : 1.0;
-    softStart.update(behavExtDes);
+    softStart.update(behavExtDes); 
   } else {
     behavior->update();
   }
+  
+//  Have the tail revert to standing position when not in tail mode
+  if (behavior != &tail) {
+    M[8].setGain(0.8, 0.01);
+    M[8].setPosition(-X.pitch);
+  }
+
+  // M[8].setPosition(-X.pitch);
 
   // Remote: set parameters, stop behavior
   remote->updateInterrupt();
@@ -116,8 +125,13 @@ void setup() {
   if (remote != &remoteComputer)
     enable(true);
   // first behavior
-  bound.begin();
   behavior->begin();
+  
+// TAIL SETUP  
+  M[8].enable(true);
+  M[8].setGain(0.8, 0.01);
+  M[8].setPosition(-X.pitch);
+  
 
   // // test no remote
   // delay(10000);

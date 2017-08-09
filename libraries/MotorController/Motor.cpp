@@ -125,6 +125,30 @@ float Motor::update() {
   return correctedVal;
 }
 
+
+// TAIL PARAMETER SETTING FUNCTION
+
+float Motor::updateTail() {
+  float pi = 3.1415;
+  float pos = getPosition();
+
+  if (pos >= pi/2 || pos <= -pi/2) {
+    setpoint = 0
+  } else if (pos <= - pi/2){
+
+  }
+
+
+  float posCtrlVal = pd.update(pos, setpoint);
+
+
+}
+
+
+
+
+
+
 // ===============================================================================
 // Derived classes: driver / feedback device specific
 // ===============================================================================

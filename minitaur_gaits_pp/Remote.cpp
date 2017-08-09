@@ -147,12 +147,12 @@ void RemoteRC::updateLoop() {
     // the "if" above is true if the left stick horiz is pushed as a switch
     if (REMOTE_RC_6CH) {
       // Knob => this doesn't interfere with behavior selection
-      //behavior->signal((rcCmd[2] > REMOTE_RC_ZERO) ? 1 : 0);// left = signal 0, right = signal 1  // JN COMMENTED OUT TO AVOID SIGNAL FUNCTION
+      behavior->signal((rcCmd[2] > REMOTE_RC_ZERO) ? 1 : 0);// left = signal 0, right = signal 1
       lastSignal = millis();
     } else {
       // if no knob, signal only if behavior isn't running
       if (behavior->running()) {
-        //behavior->signal(); // JN COMMENTED OUT TO AVOID SIGNAL FUNCTION
+        behavior->signal();
         lastSignal = millis();
       } else {
         halHeartbeatEnabled = false;
