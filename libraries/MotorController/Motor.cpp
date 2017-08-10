@@ -128,19 +128,70 @@ float Motor::update() {
 
 // TAIL PARAMETER SETTING FUNCTION
 
-float Motor::updateTail() {
-  float pi = 3.1415;
-  float pos = getPosition();
+void Motor::updateTail() {
+ 	float pos = getPosition();
+	setpoint = constrain(fmodf_mpi_pi(setpoint), -PI/2.0, PI/2.0);
+	float buffer = 0.05;
+	float kp = 0.6;
+	float kd = 0.04;
+	if (pos>=PI/2.0-buffer && pos <=PI){
+		if (mode == POSITION_MODE && ((pos-setpoint<=0) || (pos - setpoint>=PI))){
+			setGain(kp, kd);
+			setpoint = PI/2.0;
+			val = pd.update(pos, setpoint);
+		} else if (mode == OPEN_LOOP_MODE) {
+			mode = POSITION_MODE;
+			setGain(kp, kd);
+			setpoint = PI/2.0;
+			float tailVal = pd.update(pos, setpoint);
+			if (tailVal <= val){
+				val = tailVal;
+			}
+		} else {
+			float posCtrlVal = pd.update(pos, setpoint);
 
-  if (pos >= pi/2 || pos <= -pi/2) {
-    setpoint = 0
-  } else if (pos <= - pi/2){
+  		// In position mode, update the motor command
+  		if (mode == POSITION_MODE)
+    	val = posCtrlVal;
+		}
+	}	else if (pos<=-PI/2.0+buffer && pos>=-PI){
+		if (mode == POSITION_MODE && ((pos-setpoint>=0) || (pos - setpoint<=-PI))){
+			setGain(kp, kd);
+			setpoint = -PI/2.0;
+			val = pd.update(pos, setpoint);
+		} else if (mode == OPEN_LOOP_MODE) {
+			mode = POSITION_MODE;
+			setGain(kp, kd);
+			setpoint = -PI/2.0;
+			float tailVal = pd.update(pos, setpoint);
+			if (tailVal >= val){
+				val = tailVal;
+			}
+		} else {
+			float posCtrlVal = pd.update(pos, setpoint);
 
-  }
+  		// In position mode, update the motor command
+  		if (mode == POSITION_MODE)
+    	val = posCtrlVal;
+		}
+	} else {
+		float posCtrlVal = pd.update(pos, setpoint);
 
+  	// In position mode, update the motor command
+  	if (mode == POSITION_MODE)
+    val = posCtrlVal;
+	}
 
-  float posCtrlVal = pd.update(pos, setpoint);
+  // In open-loop mode, val has been set and nothing else needs to be done
 
+  // Send command, but don't modify "val" (set by user)
+  correctedVal = mapVal(val);// + barrier.calculate(pos));
+
+  // send the command
+  sendOpenLoop(correctedVal);
+
+//  // Return the command so that the slave can do the same thing
+//  return correctedVal;
 
 }
 

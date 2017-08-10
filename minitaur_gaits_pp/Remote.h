@@ -25,7 +25,6 @@
 #include "Bound.h"
 #include "Walk.h"
 #include "Dig.h"
-#include "IMUReset.h"
 #include "FrontFlip.h"
 #include "Kick.h"
 #include "Tail.h"

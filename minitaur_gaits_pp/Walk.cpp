@@ -6,7 +6,7 @@
  */
 #include "Walk.h"
 // leaps as part of walk ("sub-behavior"?)
-#include "RSUJump.h"
+
 
 /**
  * TODO:
@@ -25,7 +25,7 @@ void Walk::signal(uint8_t sig) {
   // use LEAP_STANCE to make update do the jump update instead
   if (sig == 1) {
     signalState = SIGNAL_LEAP_STANCE;
-    rsuJump.begin();
+    //rsuJump.begin();
   } else if (sig == 0) {
     posRollMode = true;
     posRollTimer = 0;
@@ -38,9 +38,9 @@ void Walk::update() {
     posRollMode = false;
   // Leap sub-behaviors -----------------------
   if (signalState == SIGNAL_LEAP_STANCE) {
-    rsuJump.update();
-    if (!rsuJump.running())
-      signalState = SIGNAL_NONE;
+    //rsuJump.update();
+    //if (!rsuJump.running())
+    //  signalState = SIGNAL_NONE;
     return;
   }
   // Walk code ------------------------------
@@ -70,6 +70,31 @@ void Walk::update() {
   // if (relaxTimer < 2000 && mode == WM_SIT && remoteEnableSignal)
   //   walk();
 
+  // Tail control -------------------------------------------
+  float kp = 0.3;
+  float kd = 0.03;
+  M[8].setGain(kp,kd);
+  
+  // sine wave
+  float sinAmplitude = 1;
+  float sinphase = 0;
+  float sinbias = 0;
+  
+  bool bbFlag = false;
+  float bbAmplitude = 1;
+  
+  bool pcFlag = true;
+  float pcGain = 0.3;
+  float pcCutoff = 0.5;
+  if (pcFlag){
+    if (fabsf(X.pitchdot) >= pcCutoff){
+      M[8].setOpenLoop(pcGain*X.pitchdot);
+    } else {
+      M[8].setPosition(-X.pitch);
+    }
+  }
+
+
   // SIT MODE ------------------------------
   const uint32_t tSitStandAnim = 700;
   if (mode == WM_SIT || (mode == WM_WALK && X.t - tstart < tSitStandAnim)) {
@@ -95,6 +120,15 @@ void Walk::update() {
     // if (mode == WM_WAIT && X.t - tstart > 200)
     //   mode = WM_WALK;
     X.xd = 0;//presumably
+    
+    if (pcFlag){
+    if (fabsf(X.pitchdot) >= pcCutoff){
+      M[8].setOpenLoop(pcGain*X.pitchdot);
+    } else {
+      M[8].setPosition(-X.pitch);
+    }
+  }
+    
     return;
   }
   // Assume always running (or other behaviors can switch into it)
@@ -144,6 +178,10 @@ void Walk::update() {
   float uspeed = kSpeed*speedDes;
   // body pitch should conform to slope (add pitch damping), but roll should correct to 0. instead legs should point vertically down
   float upitch = kPitchD*X.pitchdot;
+  
+
+  
+  
 
   // Trot walk ----------------------------------------------
   // flightLeg will be -1, 0, or 1
@@ -151,6 +189,7 @@ void Walk::update() {
   int numInStance = 0;
   //For logging
   X.mode = 10+flightLeg;
+ 
   for (int i=0; i<4; ++i) {
     bool bRear = (i==1 || i==3);
     if (bInverted)
@@ -231,6 +270,9 @@ void Walk::update() {
           // nextStepLeg, stepLeg will both be reset to -1 after the step
           nextFlightLeg = (i==0 || i==3) ? 1 : 0;// i == 0/3 -> 1, i == 1/2->0
           tTD = X.t;
+          
+          // Rachet tail
+          if (i==0 && bbFlag) M[8].setPosition(-bbAmplitude);
         }
       }
     } else {
@@ -282,6 +324,9 @@ void Walk::update() {
         flightLeg = nextFlightLeg;
         tLO = X.t;
         pep = absAngles[i];
+        
+        // Rachet tail
+        if (i==0 && bbFlag) M[8].setPosition(bbAmplitude);
       }
     }
   }

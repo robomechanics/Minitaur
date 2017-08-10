@@ -11,7 +11,7 @@
 #include <Behavior.h>
 #include "HAL.h"
 #include "Remote.h"
-#include "SoftStart.h"
+#include "SoftStart.h"w
 #include "IMUObject.h"
 // ====== To save compile time if not using MPU6000, comment next two lines =====
 // #include <MPU6000.h>
@@ -49,18 +49,18 @@ SoftStart softStart;
 void debug() {
   // TEST
   Serial1 << X.t << "\t";
-  Serial1 << controlTime << "\t";// Make sure < 1000 (assuming CONTROL_RATE = 1000)!
+  // Serial1 << controlTime << "\t";// Make sure < 1000 (assuming CONTROL_RATE = 1000)!
 
   // Serial1 << remoteRC.throttle << "\t";
 
   // Serial1 << walk.frac << "\t";
 
   // Battery ------------------------------
-  // Serial1 << X.Vbatt << "\t";// If resistor is not populated, will get > 50
+  Serial1 << X.Vbatt << "\t";// If resistor is not populated, will get > 50
 
   // IMU --------------------------------
-  Serial1 << X.roll << "\t" << X.pitch << "\t" << X.yaw << "\t";
-  // Serial1 << X.rolldot << "\t" << X.pitchdot << "\t" << X.yawdot;
+//  Serial1 << X.roll << "\t" << X.pitch << "\t" << X.yaw << "\t";
+  Serial1 << X.rolldot << "\t" << X.pitchdot << "\t" << X.yawdot;
 
   // // RC RECEIVER --------------------
   // for (int i=0; i<RemoteRC::NRECPINS; ++i)
@@ -103,10 +103,11 @@ void controlLoop() {
   }
   
 //  Have the tail revert to standing position when not in tail mode
-  if (behavior != &tail) {
-    M[8].setGain(0.8, 0.01);
-    M[8].setPosition(-X.pitch);
-  }
+//  if (behavior != &tail) {
+//    M[8].setPosition((float)X.t/1000.0);
+////    M[8].setOpenLoop(0.04*arm_sin_f32(0.001*X.t));
+//    Serial1 << 0.04*arm_sin_f32(0.001*X.t) << "\n";
+//  }
 
   // M[8].setPosition(-X.pitch);
 

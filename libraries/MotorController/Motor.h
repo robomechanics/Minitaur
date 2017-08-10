@@ -175,6 +175,7 @@ public:
    * @return Returns the corrected raw PWM sent to the motor controller
    */
   float update();
+	void updateTail();
 
   /**
    * @brief Run this after you are sure there is non-garbage rawPosition data
