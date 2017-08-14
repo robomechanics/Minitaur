@@ -43,6 +43,8 @@ struct LogVector {
   uint16_t align = 0xbbaa;//endianness reverses bytes to aabb
   // regular log
   volatile uint32_t t;//4
+  
+  
   // pitch = body pitch
   volatile float roll, pitch, yaw;//16
   //r pitchdot, rolldot, yawdot
@@ -58,7 +60,9 @@ struct LogVector {
   // forward velocity
   volatile float Vbatt;//100
   // 8-bit discrete mode
+  volatile uint8_t log; // 0 or 1 for if we are recording
   volatile uint8_t mode;//101
+  
 } __attribute__ ((packed));
 extern volatile LogVector X;
 

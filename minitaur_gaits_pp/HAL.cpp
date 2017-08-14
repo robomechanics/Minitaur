@@ -165,7 +165,9 @@ void halInit() {
   // Try to init openlog (don't stop if no SD card)
   openLog.begin(115200, sizeof(X), (void *)&X, 0);
 //  openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,u0,u1,u2,u3,u4,u5,u6,u7,xd,Vb,mo", "IfffffffffffffffffffffffffB"); // original
-  openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,q8,u0,u1,u2,u3,u4,u5,u6,u7,u8,p0,p1,p2,p3,p4,p5,p6,p7,p8,xd,Vb,mo", "IfffffffffffffffffffffffffffffffffffB");
+  openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,q8,u0,u1,u2,u3,u4,u5,u6,u7,u8,p0,p1,p2,p3,p4,p5,p6,p7,p8,xd,Vb,log,mo", "IfffffffffffffffffffffffffffffffffffBB");
+  //openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,q8,dq0,dq1,dq2,dq3,dq4,dq5,dq6,dq7,dq8,u0,u1,u2,u3,u4,u5,u6,u7,u8,p0,p1,p2,p3,p4,p5,p6,p7,p8,xd,Vb,mo", "IffffffffffffffffffffffffffffffffffffffffffffB");
+
   // openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,magx,magy,magz,u3,u4,u5,u6,u7,xd,Vb,mo", "IffffffffffffffffffffffffB");
 
   // Hardware setup done
@@ -228,7 +230,7 @@ void halUpdate() {
 
   // LOGGING
   X.t = millis();
-
+  X.log = log_flag;
   for (int i=0; i<NMOT; ++i) {
     X.q[i] = M[i].getPosition();
 //     float rawCur = 0;

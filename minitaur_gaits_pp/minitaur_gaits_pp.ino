@@ -48,7 +48,7 @@ SoftStart softStart;
 
 void debug() {
   // TEST
-  Serial1 << X.t << "\t";
+  //Serial1 << X.t << "\t";
   // Serial1 << controlTime << "\t";// Make sure < 1000 (assuming CONTROL_RATE = 1000)!
 
   // Serial1 << remoteRC.throttle << "\t";
@@ -56,11 +56,11 @@ void debug() {
   // Serial1 << walk.frac << "\t";
 
   // Battery ------------------------------
-  Serial1 << X.Vbatt << "\t";// If resistor is not populated, will get > 50
+  //Serial1 << X.Vbatt << "\t";// If resistor is not populated, will get > 50
 
   // IMU --------------------------------
 //  Serial1 << X.roll << "\t" << X.pitch << "\t" << X.yaw << "\t";
-  Serial1 << X.rolldot << "\t" << X.pitchdot << "\t" << X.yawdot;
+  //Serial1 << X.rolldot << "\t" << X.pitchdot << "\t" << X.yawdot;
 
   // // RC RECEIVER --------------------
   // for (int i=0; i<RemoteRC::NRECPINS; ++i)
@@ -86,7 +86,7 @@ void debug() {
   //   Serial1 << ux[i] << "," << uz[i] << "\t";
   // }
 
-  Serial1 << "\n";
+  //Serial1 << "\n";
 }
 
 void controlLoop() {

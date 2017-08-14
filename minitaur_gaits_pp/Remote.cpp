@@ -24,6 +24,7 @@ RemoteComputer remoteComputer;
 
 // locals
 int curBehavior = 0;
+uint8_t log_flag = 0;
 Behavior *behavior = behaviorArray[curBehavior];
 /**
  * Function to programmatically change behavior
@@ -38,6 +39,7 @@ void activateBehavior(Behavior *behav) {
  */
 void RemoteRC::begin() {
   // RC receiver
+  
   for (int i=0; i<NRECPINS; ++i)
     pinMode(rcRecPin[i], PWM_IN_EXTI);
 
@@ -146,6 +148,7 @@ void RemoteRC::updateLoop() {
   if (millis() > 2000 && fabsf(rcCmd[2] - REMOTE_RC_ZERO) > 1.3 && fabsf(rcCmd[2] - REMOTE_RC_ZERO) < 3 && millis() - lastSignal > REMOTE_SIGNAL_HYSTERESIS) {
     // the "if" above is true if the left stick horiz is pushed as a switch
     if (REMOTE_RC_6CH) {
+      log_flag = 1 - log_flag;
       // Knob => this doesn't interfere with behavior selection
       behavior->signal((rcCmd[2] > REMOTE_RC_ZERO) ? 1 : 0);// left = signal 0, right = signal 1
       lastSignal = millis();
