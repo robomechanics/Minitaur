@@ -233,10 +233,23 @@ void halUpdate() {
 
   // LOGGING
   X.t = millis();
-
+  
+  float toeVel[2];
+  float motorVel[2] = {0,0};
+  
+  for (int i=0;i<4; ++i){
+    toeVel[0] = leg[i].getVelocity(0);
+    toeVel[1] = leg[i].getVelocity(1);
+    leg[i].abstractToPhysical(toeVel,motorVel);
+    X.dq[2*i] = motorVel[1];
+    X.dq[2*i+1] = motorVel[0];
+  }
+  
+  X.dq[8] = M[8].getVelocity();
+  
   for (int i=0; i<NMOT; ++i) {
     X.q[i] = M[i].getPosition();
-    X.dq[i] = M[i].getVelocity();
+    
 //     float rawCur = 0;
 // #if USE_BUS
 //     rawCur = M[i].getCurrent();
