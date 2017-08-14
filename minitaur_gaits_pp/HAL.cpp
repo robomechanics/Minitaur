@@ -52,6 +52,11 @@ volatile uint32_t lastOLwrite = 0;
 // STATE
 volatile LogVector X;
 
+float Kt = 0.0954;
+float res = 0.186;
+float Vsource = 16;
+float curLim = 60;
+
 // Legs
 // MINITAUR
 const int8_t dir[] = {1, 1, 1, 1, -1, -1, -1, -1};
@@ -146,7 +151,7 @@ void halInit() {
   for (int i=0; i<NMOT; ++i) {
     uint8_t port = motorPort[i];
     M[i].init(pwmPin[port], posPin[port], motZeros[i], dir[i]);
-    M[i].setTorqueEstParams(0.0954, 0.186, 16, 60);
+    M[i].setTorqueEstParams(Kt, res, Vsource, curLim);
 
     // current reading: these are on EXTI, and on T15, T3 (for J8 and J9)
     // try to set to lower priority
@@ -165,7 +170,7 @@ void halInit() {
   // Try to init openlog (don't stop if no SD card)
   openLog.begin(115200, sizeof(X), (void *)&X, 0);
 //  openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,u0,u1,u2,u3,u4,u5,u6,u7,xd,Vb,mo", "IfffffffffffffffffffffffffB"); // original
-  openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,q8,u0,u1,u2,u3,u4,u5,u6,u7,u8,p0,p1,p2,p3,p4,p5,p6,p7,p8,xd,Vb,mo", "IfffffffffffffffffffffffffffffffffffB");
+  openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,q8,dq0,dq1,dq2,dq3,dq4,dq5,dq6,dq7,dq8,u0,u1,u2,u3,u4,u5,u6,u7,u8,p0,p1,p2,p3,p4,p5,p6,p7,p8,xd,Vb,mo", "IffffffffffffffffffffffffffffffffffffffffffffB");
   // openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,magx,magy,magz,u3,u4,u5,u6,u7,xd,Vb,mo", "IffffffffffffffffffffffffB");
 
   // Hardware setup done
@@ -231,6 +236,7 @@ void halUpdate() {
 
   for (int i=0; i<NMOT; ++i) {
     X.q[i] = M[i].getPosition();
+    X.dq[i] = M[i].getVelocity();
 //     float rawCur = 0;
 // #if USE_BUS
 //     rawCur = M[i].getCurrent();
@@ -241,11 +247,12 @@ void halUpdate() {
     // bias should be about 825
     // X.cur[i] = (uint16_t)(rawCur * 1650);
 
-    X.torque[i] = M[i].getTorque(); //INCLUDE IN NORMAL OPERATION
-    
+    //X.torque[i] = M[i].getTorque(); //INCLUDE IN NORMAL OPERATION
+    X.command[i] = M[i].getOpenLoop();
     // Estimate power at each of the legs
-    X.power[i] = M[i].getTorque()*M[i].getVelocity();
-    if (X.power[i] <= 0 ) X.power[i] = 0;  // Ignore negative power
+    
+    X.power[i] = Vsource*M[i].getOpenLoop()*(Vsource*M[i].getOpenLoop() - M[i].getVelocity()*Kt)/res;
+//    if (X.power[i] <= 0 ) X.power[i] = 0;  // Ignore negative power
   }
   for (int i=0; i<4; ++i) {
     // NOTE ux>0 when leg pushed "back", uz>0 when pushed "up"

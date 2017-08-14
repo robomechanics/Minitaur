@@ -56,11 +56,11 @@ void debug() {
   // Serial1 << walk.frac << "\t";
 
   // Battery ------------------------------
-  Serial1 << X.Vbatt << "\t";// If resistor is not populated, will get > 50
+//  Serial1 << X.Vbatt << "\t";// If resistor is not populated, will get > 50
 
   // IMU --------------------------------
 //  Serial1 << X.roll << "\t" << X.pitch << "\t" << X.yaw << "\t";
-  Serial1 << X.rolldot << "\t" << X.pitchdot << "\t" << X.yawdot;
+//  Serial1 << X.rolldot << "\t" << X.pitchdot << "\t" << X.yawdot;
 
   // // RC RECEIVER --------------------
   // for (int i=0; i<RemoteRC::NRECPINS; ++i)
@@ -73,11 +73,14 @@ void debug() {
   // }
 
   // // MOTORS ------------------------
-  // for (int i=0; i<NMOT; ++i) {
-  //   // UNCOMMENT THIS TO ZERO LEGS (Get raw pos when in jig; type into motZeros)
-  //   Serial1 << _FLOAT(M[i].getRawPosition(), 3) << "\t";
-  //   // Serial1 << M[i].getTorque() << "\t";
-  // }
+  for (int i=0; i<NMOT; ++i) {
+    // UNCOMMENT THIS TO ZERO LEGS (Get raw pos when in jig; type into motZeros)
+    // Serial1 << _FLOAT(M[i].getRawPosition(), 3) << "\t";
+    // Serial1 << M[i].getTorque() << "\t";
+  
+    // Power -------------------------------
+    Serial1 << X.power[i] << "\t";
+  }
 
   // // LEG -----------------------------
   // for (int i=0; i<4; ++i) {
