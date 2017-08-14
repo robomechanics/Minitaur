@@ -71,9 +71,14 @@ void Walk::update() {
   //   walk();
 
   // Tail control -------------------------------------------
-  float kp = 0.3;
-  float kd = 0.03;
+  float kp = 1.0;
+  float kd = 0.02;
   M[8].setGain(kp,kd);
+  
+  bool vertFlag = true;
+  if (vertFlag){
+    M[8].setPosition(-X.pitch);
+  }
   
   // sine wave
   float sinAmplitude = 1;
@@ -83,7 +88,7 @@ void Walk::update() {
   bool bbFlag = false;
   float bbAmplitude = 1;
   
-  bool pcFlag = true;
+  bool pcFlag = false;
   float pcGain = 0.3;
   float pcCutoff = 0.5;
   if (pcFlag){
@@ -125,6 +130,11 @@ void Walk::update() {
     if (fabsf(X.pitchdot) >= pcCutoff){
       M[8].setOpenLoop(pcGain*X.pitchdot);
     } else {
+      M[8].setPosition(-X.pitch);
+    }
+//    M[8].setOpenLoop(0);
+
+    if (vertFlag){
       M[8].setPosition(-X.pitch);
     }
   }

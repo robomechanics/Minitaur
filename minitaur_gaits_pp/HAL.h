@@ -51,9 +51,12 @@ struct LogVector {
   volatile float rolldot, pitchdot, yawdot;//28
   // Motor positions
   volatile float q[NMOT];//60
+  // Motor velocities
+  volatile float dq[NMOT];//60
   // Motor currents
   // volatile float magx, magy, magz; // 72 // for debug only 
-  volatile float torque[NMOT];//92
+//  volatile float torque[NMOT];//92
+  volatile float command[NMOT];//92
   volatile float power[NMOT];//92
   // forward velocity
   volatile float xd;//96

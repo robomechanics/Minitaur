@@ -131,7 +131,7 @@ float Motor::update() {
 void Motor::updateTail() {
  	float pos = getPosition();
 	setpoint = constrain(fmodf_mpi_pi(setpoint), -PI/2.0, PI/2.0);
-	float buffer = 0.05;
+	float buffer = 0.5;
 	float kp = 0.6;
 	float kd = 0.04;
 	if (pos>=PI/2.0-buffer && pos <=PI){
