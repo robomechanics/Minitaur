@@ -44,38 +44,34 @@ struct LogVector {
   // regular log
   volatile uint32_t t;//4
   
-  
   // pitch = body pitch
   volatile float pitch;
-  //volatile float roll, pitch, yaw;//16
-  //r pitchdot, rolldot, yawdot
+  volatile float q8;
   
   // Motor positions
   //volatile float q[NMOT];//60
-  // Motor velocities
-  //volatile float dq[NMOT];//60
+
   // Motor currents
   // volatile float magx, magy, magz; // 72 // for debug only 
-//  volatile float torque[NMOT];//92
-  //volatile float command[NMOT];//92
-  volatile float power[NMOT];//92
-  // forward velocity
-  //96
+  // volatile float torque[NMOT];//92
+  volatile float command[NMOT];//92
+  // volatile float power[NMOT];//92
+  // 0 or 1 for if we are recording
   volatile float log1;
  
-   // 0 or 1 for if we are recording
-  volatile uint8_t mode;//101
-  
-   volatile float roll, yaw;
-  // forward velocity
-  
+   
   // 8-bit discrete mode
-  volatile float xd;
-  volatile float rolldot, pitchdot, yawdot;//28
-  volatile float q8;
+  volatile uint8_t mode;//101
+  // Motor velocities
   volatile float dq[NMOT];
-  //volatile float Vbatt;//100
+  // volatile float roll, yaw;//16
+  volatile float roll, yaw;  
+  // forward velocity
+  volatile float xd;
+  // r pitchdot, rolldot, yawdot
+  volatile float rolldot, pitchdot, yawdot;//2
   
+  //volatile float Vbatt;//100
   
 } __attribute__ ((packed));
 extern volatile LogVector X;
