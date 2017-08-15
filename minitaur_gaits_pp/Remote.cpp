@@ -24,7 +24,7 @@ RemoteComputer remoteComputer;
 
 // locals
 int curBehavior = 0;
-uint8_t log_flag = 0;
+
 Behavior *behavior = behaviorArray[curBehavior];
 /**
  * Function to programmatically change behavior
@@ -145,32 +145,37 @@ void RemoteRC::updateLoop() {
     }
   }
   // signal / cycle through behaviors
-  if (millis() > 2000 && fabsf(rcCmd[2] - REMOTE_RC_ZERO) > 1.3 && fabsf(rcCmd[2] - REMOTE_RC_ZERO) < 3 && millis() - lastSignal > REMOTE_SIGNAL_HYSTERESIS) {
+  if (millis() > 2000 && (rcCmd[2] - REMOTE_RC_ZERO) > 1.3 && (rcCmd[2] - REMOTE_RC_ZERO) < 3 && millis() - lastSignal > REMOTE_SIGNAL_HYSTERESIS) {
     // the "if" above is true if the left stick horiz is pushed as a switch
-    if (REMOTE_RC_6CH) {
-      log_flag = 1 - log_flag;
-      // Knob => this doesn't interfere with behavior selection
-      behavior->signal((rcCmd[2] > REMOTE_RC_ZERO) ? 1 : 0);// left = signal 0, right = signal 1
-      lastSignal = millis();
-    } else {
-      // if no knob, signal only if behavior isn't running
-      if (behavior->running()) {
-        behavior->signal();
-        lastSignal = millis();
-      } else {
-        halHeartbeatEnabled = false;
-        curBehavior = (rcCmd[2] > REMOTE_RC_ZERO) ? curBehavior+1 : curBehavior+NUM_BEHAVIORS-1;
-        curBehavior = curBehavior % NUM_BEHAVIORS;
-        for (uint8_t i=0; i<2*(curBehavior+1); ++i) {
-          digitalWrite(led1, TOGGLE);
-          digitalWrite(led0, TOGGLE);
-          delay(25);
-        }
-        behavior = behaviorArray[curBehavior];
-        halHeartbeatEnabled = true;
-      }
-    }
-    lastSignal = millis();
+    //X.log1 = 1;
+    //
+    log_flag = 1;
+  }
+  else if (millis() > 2000 && (rcCmd[2] - REMOTE_RC_ZERO) < -1.3 && (rcCmd[2] - REMOTE_RC_ZERO) > -3 && millis() - lastSignal > REMOTE_SIGNAL_HYSTERESIS) {
+    log_flag = 0;
+//    if (REMOTE_RC_6CH) {
+//      // Knob => this doesn't interfere with behavior selection
+//      behavior->signal((rcCmd[2] > REMOTE_RC_ZERO) ? 1 : 0);// left = signal 0, right = signal 1
+//      lastSignal = millis();
+//    } else {
+//      // if no knob, signal only if behavior isn't running
+//      if (behavior->running()) {
+//        behavior->signal();
+//        lastSignal = millis();
+//      } else {
+//        halHeartbeatEnabled = false;
+//        curBehavior = (rcCmd[2] > REMOTE_RC_ZERO) ? curBehavior+1 : curBehavior+NUM_BEHAVIORS-1;
+//        curBehavior = curBehavior % NUM_BEHAVIORS;
+//        for (uint8_t i=0; i<2*(curBehavior+1); ++i) {
+//          digitalWrite(led1, TOGGLE);
+//          digitalWrite(led0, TOGGLE);
+//          delay(25);
+//        }
+//        behavior = behaviorArray[curBehavior];
+//        halHeartbeatEnabled = true;
+//      }
+//    }
+    //lastSignal = millis();
   }
 }
 

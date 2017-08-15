@@ -9,7 +9,7 @@
 #include "HAL.h"
 #include "Remote.h"
 #include "IMUObject.h"
-
+volatile float log_flag = 0;
 const uint8_t VsourcePin = PF2;
 DLPF VsourceF;
 // LEDs
@@ -95,6 +95,7 @@ void errorStop(const char *msg) {
 
 void halInit() {
   // leds
+  
   pinMode(led0, OUTPUT);
   pinMode(led1, OUTPUT);
   digitalWrite(led1, HIGH);
@@ -173,9 +174,8 @@ void halInit() {
 
   //openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,q8,u0,u1,u2,u3,u4,u5,u6,u7,u8,p0,p1,p2,p3,p4,p5,p6,p7,p8,xd,Vb,log,mo", "IfffffffffffffffffffffffffffffffffffBB");
   //openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,q8,dq0,dq1,dq2,dq3,dq4,dq5,dq6,dq7,dq8,u0,u1,u2,u3,u4,u5,u6,u7,u8,p0,p1,p2,p3,p4,p5,p6,p7,p8,xd,Vb,mo", "IffffffffffffffffffffffffffffffffffffffffffffB");
-
-
-  openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,q8,dq0,dq1,dq2,dq3,dq4,dq5,dq6,dq7,dq8,u0,u1,u2,u3,u4,u5,u6,u7,u8,p0,p1,p2,p3,p4,p5,p6,p7,p8,xd,Vb,log,mo", "IffffffffffffffffffffffffffffffffffffffffffffBB");
+  openLog.initOpenLog("t,p,p0,p1,p2,p3,p4,p5,p6,p7,p8,log1,mo,r,y,xd,rd,pd,yd", "IfffffffffffBffffff");                    
+  //openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,q8,dq0,dq1,dq2,dq3,dq4,dq5,dq6,dq7,dq8,u0,u1,u2,u3,u4,u5,u6,u7,u8,p0,p1,p2,p3,p4,p5,p6,p7,p8,Vb,log1,mo", "IffffffffffffffffffffffffffffffffffffffffffffB");
 
   // openLog.initOpenLog("t,r,p,y,rd,pd,yd,q0,q1,q2,q3,q4,q5,q6,q7,magx,magy,magz,u3,u4,u5,u6,u7,xd,Vb,mo", "IffffffffffffffffffffffffB");
 
@@ -231,7 +231,7 @@ void halUpdate() {
   // Vsource
   // 3.3V, Volt div 470 & 10k, 12bit. So 3.3/4096*(10470/470) = 0.01794745262
   // empirical tuning: 
-  X.Vbatt = VsourceF.update(analogRead(VsourcePin)) * 0.02009387094;
+  //X.Vbatt = VsourceF.update(analogRead(VsourcePin)) * 0.02009387094;
 
 
   // totalPings+=NMOT;
@@ -239,10 +239,10 @@ void halUpdate() {
 
   // LOGGING
   X.t = millis();
-  X.log = log_flag;
+  X.log1 = log_flag;
   for (int i=0; i<NMOT; ++i) {
-    X.q[i] = M[i].getPosition();
-    X.dq[i] = M[i].getVelocity();
+    //X.q[i] = M[i].getPosition();
+    //X.dq[i] = M[i].getVelocity();
 //     float rawCur = 0;
 // #if USE_BUS
 //     rawCur = M[i].getCurrent();
@@ -254,7 +254,7 @@ void halUpdate() {
     // X.cur[i] = (uint16_t)(rawCur * 1650);
 
     //X.torque[i] = M[i].getTorque(); //INCLUDE IN NORMAL OPERATION
-    X.command[i] = M[i].getOpenLoop();
+    //X.command[i] = M[i].getOpenLoop();
     // Estimate power at each of the legs
     
     X.power[i] = Vsource*M[i].getOpenLoop()*(Vsource*M[i].getOpenLoop() - M[i].getVelocity()*Kt)/res;
@@ -276,4 +276,5 @@ void halUpdate() {
   nIters++;
   digitalWrite(led0, (nIters % hbFreq < hbOnFreq) && halHeartbeatEnabled ? LOW : HIGH);
 }
+
 

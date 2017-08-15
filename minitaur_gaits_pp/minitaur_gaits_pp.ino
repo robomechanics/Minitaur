@@ -9,8 +9,8 @@
 #include <VN100.h>
 #include <BulkSerial.h>
 #include <Behavior.h>
-#include "HAL.h"
 #include "Remote.h"
+#include "HAL.h"
 #include "SoftStart.h"w
 #include "IMUObject.h"
 // ====== To save compile time if not using MPU6000, comment next two lines =====
@@ -87,9 +87,9 @@ void debug() {
     // Serial1 << M[i].getTorque() << "\t";
   
     // Power -------------------------------
-    Serial1 << X.power[i] << "\t";
+    //Serial1 << X.dq[i] << " " << X.command[i] << " " << X.power[i] << "\t";
   }
-
+  Serial1 << X.log1;
   // // LEG -----------------------------
   // for (int i=0; i<4; ++i) {
   //   // Serial1 << "[" << leg[i].getPosition(EXTENSION) << ","  << leg[i].getPosition(ANGLE) << "]\t";
@@ -97,7 +97,7 @@ void debug() {
   //   Serial1 << ux[i] << "," << uz[i] << "\t";
   // }
 
-  //Serial1 << "\n";
+  Serial1 << "\n";
 }
 
 void controlLoop() {

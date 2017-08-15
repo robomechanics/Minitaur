@@ -19,7 +19,7 @@ extern uint8_t remoteKnob;
 extern float ux[4], uz[4];
 // defined in .ino
 extern const float motZeros[];
-
+extern volatile float log_flag;
 const int NMOT = 9;
 
 // MOTORS
@@ -46,25 +46,34 @@ struct LogVector {
   
   
   // pitch = body pitch
-  volatile float roll, pitch, yaw;//16
+  volatile float pitch;
+  //volatile float roll, pitch, yaw;//16
   //r pitchdot, rolldot, yawdot
-  volatile float rolldot, pitchdot, yawdot;//28
+  
   // Motor positions
-  volatile float q[NMOT];//60
+  //volatile float q[NMOT];//60
   // Motor velocities
-  volatile float dq[NMOT];//60
+  //volatile float dq[NMOT];//60
   // Motor currents
   // volatile float magx, magy, magz; // 72 // for debug only 
 //  volatile float torque[NMOT];//92
-  volatile float command[NMOT];//92
+  //volatile float command[NMOT];//92
   volatile float power[NMOT];//92
   // forward velocity
-  volatile float xd;//96
-  // forward velocity
-  volatile float Vbatt;//100
-  // 8-bit discrete mode
-  volatile uint8_t log; // 0 or 1 for if we are recording
+  //96
+  volatile float log1;
+ 
+   // 0 or 1 for if we are recording
   volatile uint8_t mode;//101
+  
+   volatile float roll, yaw;
+  // forward velocity
+  
+  // 8-bit discrete mode
+  volatile float xd;
+  volatile float rolldot, pitchdot, yawdot;//28
+  //volatile float Vbatt;//100
+  
   
 } __attribute__ ((packed));
 extern volatile LogVector X;
@@ -72,6 +81,7 @@ extern volatile LogVector X;
 void halInit();
 void halUpdate();
 void enable(bool);
+void updateLogTag(int);
 void errorStop(const char *msg);
 extern bool halHeartbeatEnabled;
 

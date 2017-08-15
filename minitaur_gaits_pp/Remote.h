@@ -45,7 +45,7 @@ void activateBehavior(Behavior *behav);
 // parameters for various remotes
 #define REMOTE_RC_ZERO 7.87
 #define REMOTE_SIGNAL_HYSTERESIS 2000
-extern uint8_t log_flag;
+
 extern Peripheral *remote;// defined in .ino file
 
 /** 
