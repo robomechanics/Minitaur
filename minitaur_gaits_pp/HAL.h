@@ -72,6 +72,7 @@ struct LogVector {
   // 8-bit discrete mode
   volatile float xd;
   volatile float rolldot, pitchdot, yawdot;//28
+  volatile float q8;
   //volatile float Vbatt;//100
   
   

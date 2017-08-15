@@ -90,7 +90,7 @@ void debug() {
     // Power -------------------------------
     //Serial1 << X.dq[i] << " " << X.command[i] << " " << X.power[i] << "\t";
   
-  Serial1 << X.log1;
+  //Serial1 << X.log1;
   // // LEG -----------------------------
     //Serial1 << X.dq[i] << " " << X.command[i] << " " << X.power[i] << "\t";
   }
@@ -103,7 +103,7 @@ void debug() {
   //   // Serial1 << leg[i].getVelocity(EXTENSION) << "\t";
   // }
 
-  Serial1 << "\n";
+  //Serial1 << "\n";
 }
 
 void controlLoop() {
