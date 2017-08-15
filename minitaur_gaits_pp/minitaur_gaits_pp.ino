@@ -11,7 +11,7 @@
 #include <Behavior.h>
 #include "Remote.h"
 #include "HAL.h"
-#include "SoftStart.h"w
+#include "SoftStart.h"
 #include "IMUObject.h"
 // ====== To save compile time if not using MPU6000, comment next two lines =====
 // #include <MPU6000.h>
@@ -64,10 +64,11 @@ void debug() {
   //Serial1 << X.rolldot << "\t" << X.pitchdot << "\t" << X.yawdot;
 
 //  Serial1 << X.Vbatt << "\t";// If resistor is not populated, will get > 50
+ 
 
   // IMU --------------------------------
-//  Serial1 << X.roll << "\t" << X.pitch << "\t" << X.yaw << "\t";
-//  Serial1 << X.rolldot << "\t" << X.pitchdot << "\t" << X.yawdot;
+  //  Serial1 << X.roll << "\t" << X.pitch << "\t" << X.yaw << "\t";
+  //  Serial1 << X.rolldot << "\t" << X.pitchdot << "\t" << X.yawdot;
 
 
   // // RC RECEIVER --------------------
@@ -88,13 +89,18 @@ void debug() {
   
     // Power -------------------------------
     //Serial1 << X.dq[i] << " " << X.command[i] << " " << X.power[i] << "\t";
-  }
+  
   Serial1 << X.log1;
   // // LEG -----------------------------
+    //Serial1 << X.dq[i] << " " << X.command[i] << " " << X.power[i] << "\t";
+  }
+
+   // LEG -----------------------------
   // for (int i=0; i<4; ++i) {
   //   // Serial1 << "[" << leg[i].getPosition(EXTENSION) << ","  << leg[i].getPosition(ANGLE) << "]\t";
   //   // leg forces
-  //   Serial1 << ux[i] << "," << uz[i] << "\t";
+  //   // Serial1 << ux[i] << "," << uz[i] << "\t";
+  //   // Serial1 << leg[i].getVelocity(EXTENSION) << "\t";
   // }
 
   Serial1 << "\n";
