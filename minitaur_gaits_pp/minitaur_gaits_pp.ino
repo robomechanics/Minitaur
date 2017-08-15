@@ -120,6 +120,13 @@ void debug() {
 
 void controlLoop() {
   uint32_t tic = micros();
+  
+  if (remoteRC.remoteKnob == 3) {
+      enable(false);
+      M[8].setGain(.5);
+      M[8].setPosition(0);
+  }
+  
   halUpdate();
 
   // BEHAVIOR

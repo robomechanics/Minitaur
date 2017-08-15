@@ -50,6 +50,7 @@ extern Peripheral *remote;// defined in .ino file
 class RemoteRC : public Peripheral {
 public:
   // local
+  uint8_t remoteKnob;
   DLPF speedDesF; ///<Digital Low Pass Filter for speed control
   DLPF yawDesF; ///<Digital Low Pass Filter for yaw control
   DLPF vertDesF; ///<Digital Low Pass Filter for height control
