@@ -73,6 +73,7 @@ struct LogVector {
   volatile float xd;
   volatile float rolldot, pitchdot, yawdot;//28
   volatile float q8;
+  volatile float dq[NMOT];
   //volatile float Vbatt;//100
   
   

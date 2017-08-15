@@ -38,8 +38,8 @@ const float motZeros[9] = {2.570, 3.167, 3.777, 3.853, 2.183, 1.556, .675, 2.679
 
 // Behavior array: add behaviors here. First one in the array is the starting behavior.
 // Make sure the #include is in Remote.h
-const int NUM_BEHAVIORS = 6;
-Behavior *behaviorArray[NUM_BEHAVIORS] = {&bound, &kick, &walk, &tail, &dig, &frontFlip};
+const int NUM_BEHAVIORS = 3;
+Behavior *behaviorArray[NUM_BEHAVIORS] = {&bound, &walk, &dig};
 
 // ======================================================================
 
@@ -96,14 +96,14 @@ void debug() {
   }
 
    // LEG -----------------------------
-  // for (int i=0; i<4; ++i) {
-  //   // Serial1 << "[" << leg[i].getPosition(EXTENSION) << ","  << leg[i].getPosition(ANGLE) << "]\t";
-  //   // leg forces
-  //   // Serial1 << ux[i] << "," << uz[i] << "\t";
-  //   // Serial1 << leg[i].getVelocity(EXTENSION) << "\t";
-  // }
-
-  //Serial1 << "\n";
+//   for (int i=0; i<4; ++i) {
+//     Serial1 << "[" << leg[i].getVelocity(EXTENSION) << ","  << leg[i].getVelocity(ANGLE) << "] TESTING\t";
+//  //   // leg forces
+//  //   // Serial1 << ux[i] << "," << uz[i] << "\t";
+//  //   // Serial1 << leg[i].getVelocity(EXTENSION) << "\t";
+//   }
+//
+//  Serial1 << "\n";
 }
 
 void controlLoop() {
@@ -118,7 +118,7 @@ void controlLoop() {
   } else {
     behavior->update();
   }
-  
+
 //  Have the tail revert to standing position when not in tail mode
 //  if (behavior != &tail) {
 //    M[8].setPosition((float)X.t/1000.0);
