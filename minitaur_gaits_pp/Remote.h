@@ -24,10 +24,6 @@
 // ===== Include behaviors here =====
 #include "Bound.h"
 #include "Walk.h"
-#include "Dig.h"
-#include "FrontFlip.h"
-#include "Kick.h"
-#include "Tail.h"
 // ==================================
 
 

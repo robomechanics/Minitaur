@@ -70,8 +70,8 @@ void Walk::update() {
   //   walk();
 
   // Tail control -------------------------------------------
-  float kp = .8;
-  float kd = 0.03;
+  float kp = 0.8;
+  float kd = 0.05;
   M[8].setGain(kp,kd);
   
   bool vertFlag = false;
@@ -84,8 +84,6 @@ void Walk::update() {
   float sinphase = 0;
   float sinbias = 0;
   bool sinFlag = true;
-  
-  
   
   bool bbFlag = false;
   float bbAmplitude = 1;
@@ -100,7 +98,6 @@ void Walk::update() {
       M[8].setPosition(-X.pitch);
     }
   }
-
 
   // SIT MODE ------------------------------
   const uint32_t tSitStandAnim = 700;
@@ -195,9 +192,6 @@ void Walk::update() {
   float uspeed = kSpeed*speedDes;
   // body pitch should conform to slope (add pitch damping), but roll should correct to 0. instead legs should point vertically down
   float upitch = kPitchD*X.pitchdot;
-  
-
-  
   
 
   // Trot walk ----------------------------------------------
