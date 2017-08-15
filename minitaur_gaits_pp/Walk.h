@@ -14,6 +14,8 @@ enum WalkMode {
   WM_SIT = 0, WM_WALK, WM_REORIENT
 };
 
+
+
 class Walk : public ReorientableBehavior {
 public:
   bool remoteEnableSignal;
@@ -23,6 +25,8 @@ public:
   uint32_t lastUpdate;
   uint32_t relaxTimer;
   uint32_t tLO, tTD;
+  uint32_t ti;
+  float sinVal;
   bool posRollMode = false;
   uint32_t posRollTimer = 0;
   // State for taking steps
@@ -34,6 +38,7 @@ public:
   //fraction through flight, 0 if in stance
   float frac;
   DLPF speedFilt;
+  
   // // Old clocked
   // float phase;
   // float clockedLegPhase[4];

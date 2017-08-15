@@ -110,3 +110,4 @@ void IMUVN100::updateInterrupt() {
 //   pitchdot = e->angRates[1] * CONVERT_DERIVATIVES;
 //   yawdot = e->angRates[2];
 // }
+

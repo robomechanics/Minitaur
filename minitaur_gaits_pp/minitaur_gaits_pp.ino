@@ -13,6 +13,7 @@
 #include "HAL.h"
 #include "SoftStart.h"
 #include "IMUObject.h"
+#include "Walk.h"
 // ====== To save compile time if not using MPU6000, comment next two lines =====
 // #include <MPU6000.h>
 // #include <Eigen.h>
@@ -48,7 +49,7 @@ SoftStart softStart;
 
 void debug() {
   // TEST
-  //Serial1 << X.t << "\t";
+  //Serial1 << X.t << "time\t";
   // Serial1 << controlTime << "\t";// Make sure < 1000 (assuming CONTROL_RATE = 1000)!
 
   // Serial1 << remoteRC.throttle << "\t";
@@ -80,7 +81,7 @@ void debug() {
   // for (int i=0; i<16; ++i) {
   //   Serial1 << remoteComputer.computerPacket.params[i] << " ";
   // }
-
+  
   // // MOTORS ------------------------
   for (int i=0; i<NMOT; ++i) {
     // UNCOMMENT THIS TO ZERO LEGS (Get raw pos when in jig; type into motZeros)
@@ -90,7 +91,10 @@ void debug() {
     // Power -------------------------------
     //Serial1 << X.dq[i] << " " << X.command[i] << " " << X.power[i] << "\t";
   
-  Serial1 << X.log1;
+  //Serial1 << X.log1;
+  
+  
+
   // // LEG -----------------------------
     //Serial1 << X.dq[i] << " " << X.command[i] << " " << X.power[i] << "\t";
   }
@@ -103,7 +107,7 @@ void debug() {
   //   // Serial1 << leg[i].getVelocity(EXTENSION) << "\t";
   // }
 
-  Serial1 << "\n";
+  //Serial1 << "\n";
 }
 
 void controlLoop() {
@@ -147,9 +151,9 @@ void setup() {
   
 // TAIL SETUP  
   M[8].enable(true);
-  M[8].setGain(0.8, 0.01);
-  M[8].setPosition(-X.pitch);
-  
+  M[8].setGain(0.1);
+//  M[8].setPosition(-X.pitch);
+  M[8].setPosition(0);
 
   // // test no remote
   // delay(10000);

@@ -18,7 +18,6 @@
  */
 
 Walk walk;
-
 void Walk::signal(uint8_t sig) {
   delay(5);
   // FIXME for now use this for step over, later replace with proprio
@@ -71,19 +70,22 @@ void Walk::update() {
   //   walk();
 
   // Tail control -------------------------------------------
-  float kp = 1.0;
-  float kd = 0.02;
+  float kp = .8;
+  float kd = 0.03;
   M[8].setGain(kp,kd);
   
-  bool vertFlag = true;
+  bool vertFlag = false;
   if (vertFlag){
     M[8].setPosition(-X.pitch);
   }
-  
+  const int tflight = 170, tminstance = 100;
   // sine wave
   float sinAmplitude = 1;
   float sinphase = 0;
   float sinbias = 0;
+  bool sinFlag = true;
+  
+  
   
   bool bbFlag = false;
   float bbAmplitude = 1;
@@ -141,6 +143,11 @@ void Walk::update() {
     
     return;
   }
+  
+  sinVal = sinAmplitude * arm_sin_f32(2*PI*((float)(X.t - ti) / (2*(.8 * tflight + tminstance))) + sinphase) + sinbias;
+  Serial1 << sinVal << "\n";
+  M[8].setPosition(sinVal);
+  
   // Assume always running (or other behaviors can switch into it)
   if (X.t - lastUpdate > 100) {
     init();
@@ -154,7 +161,7 @@ void Walk::update() {
   // if flightLeg >= 0, all other legs are inhibited from lifting off
 
   // Times
-  const int tflight = 170, tminstance = 100;
+  
   // Gains attitude control
   const float kPitchD = 0.06;
   const float kRoll = 1.5, kRollD = 0.02;
@@ -280,7 +287,13 @@ void Walk::update() {
           // nextStepLeg, stepLeg will both be reset to -1 after the step
           nextFlightLeg = (i==0 || i==3) ? 1 : 0;// i == 0/3 -> 1, i == 1/2->0
           tTD = X.t;
-          
+          Serial1 << ti << " ti \n";
+          if (sinFlag) {
+           if (i == 1 && ti == 0) {
+             ti = X.t;
+           }
+           
+          }
           // Rachet tail
           if (i==0 && bbFlag) M[8].setPosition(-bbAmplitude);
         }
@@ -308,7 +321,7 @@ void Walk::update() {
         absAngles[i] += 0.005 * (-0.1 - absAngles[i]);
         // leg behind or across
         // else
-        //   extDes = 2.8;
+        //Â Â  extDes = 2.8;
       }
 
       leg[i].setPosition(ANGLE, angNom + absAngles[i] - X.pitch);
@@ -340,10 +353,15 @@ void Walk::update() {
       }
     }
   }
+  
+  
+  
   // speed (filter?)
   if (numInStance > 0)
     X.xd = speedFilt.update(speedAccum /((float)numInStance));
 }
+
+  
 
 
 // // CRAWL (NOT USED NOW) -------------------------------------------------
@@ -422,4 +440,5 @@ void Walk::update() {
 // }
 
 // return;
+
 
