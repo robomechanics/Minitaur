@@ -43,6 +43,7 @@ const uint8_t posPin[] = {PD12, PD13, PD14, PD15, PC6, PC7, PC8, PC9, PE2, PE3};
 const uint8_t motorPort[9] = {0, 1, 2, 3, 4, 5, 6, 7, 8};//MINI
 BlCon34 M[NMOT];
 const int CONTROL_RATE = 1000;
+uint32_t lastPrint = 0;
 #endif
 
 // OpenLog
@@ -187,6 +188,7 @@ void halInit() {
 
 void halUpdate() {
   // MOTORS
+
   for (int i=0; i<4; ++i)
     leg[i].update();
   // for PWM the leg update will update this
@@ -256,7 +258,9 @@ void halUpdate() {
     X.dq[2*i+1] = motorVel[(i < 2) ? 0 : 1];
   }
   
+  
   X.q8 = M[8].getPosition();
+  X.dq[8] = M[8].getVelocity();
   
   for (int i=0; i<NMOT; ++i) {
     //X.q[i] = M[i].getPosition();

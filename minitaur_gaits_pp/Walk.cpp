@@ -70,31 +70,33 @@ void Walk::update() {
   //   walk();
 
   // Tail control -------------------------------------------
-  float kp = 0.8;
-  float kd = 0.05;
+  float kp = 0.7;
+  float kd = 0.02;
   M[8].setGain(kp,kd);
   
   bool vertFlag = false;
-  if (vertFlag){
-    M[8].setPosition(-X.pitch);
-  }
+  bool sinFlag = true;
+  bool bbFlag = false;
+  bool pcFlag1 = false;
+  bool pcFlag2 = false;
+  
   const int tflight = 170, tminstance = 100;
   // sine wave
-  float sinAmplitude = 1;
+  float sinAmplitude = PI/4.0;
   float sinphase = 0;
-  float sinbias = 0;
-  bool sinFlag = true;
+  float sinbias = -PI/4.0;
   
-  bool bbFlag = false;
   float bbAmplitude = 1;
   
-  bool pcFlag = false;
-  float pcGain = 0.3;
+  float pcGain = 1.5;
   float pcCutoff = 0.5;
-  if (pcFlag){
+  float vertGainP = 0.75;
+  float vertGainD = 0.02;
+  if (pcFlag1){
     if (fabsf(X.pitchdot) >= pcCutoff){
       M[8].setOpenLoop(pcGain*X.pitchdot);
     } else {
+      M[8].setGain(0.4, 0.05);
       M[8].setPosition(-X.pitch);
     }
   }
@@ -124,26 +126,34 @@ void Walk::update() {
     // if (mode == WM_WAIT && X.t - tstart > 200)
     //   mode = WM_WALK;
     X.xd = 0;//presumably
+
+    if (vertFlag){
+      M[8].setPosition(-X.pitch);
+    }
+  M[8].setPosition(-X.pitch);
     
-    if (pcFlag){
+    return;
+  }
+  
+  if (vertFlag){
+      M[8].setPosition(-X.pitch);
+    }
+  
+  if (pcFlag1){
     if (fabsf(X.pitchdot) >= pcCutoff){
       M[8].setOpenLoop(pcGain*X.pitchdot);
     } else {
       M[8].setPosition(-X.pitch);
     }
-//    M[8].setOpenLoop(0);
-
-    if (vertFlag){
-      M[8].setPosition(-X.pitch);
-    }
-  }
-    
-    return;
   }
   
-  sinVal = sinAmplitude * arm_sin_f32(2*PI*((float)(X.t - ti) / (2*(.8 * tflight + tminstance))) + sinphase) + sinbias;
-  Serial1 << sinVal << "\n";
-  M[8].setPosition(sinVal);
+  if (pcFlag2){
+    float pControl = pcGain*X.pitch;
+    float vertControl = -vertGainP*(M[8].getPosition() - (-X.pitch)) - vertGainD*(M[8].getVelocity() - 0);
+    M[8].setOpenLoop(pControl + vertControl);
+  }
+  
+  
   
   // Assume always running (or other behaviors can switch into it)
   if (X.t - lastUpdate > 100) {
@@ -348,7 +358,12 @@ void Walk::update() {
     }
   }
   
-  
+  sinVal = sinAmplitude * arm_sin_f32(2*PI*((float)(X.t - ti) / (2*(.8 * tflight + tminstance))) + sinphase) + sinbias;
+  //sinVal = sinAmplitude * arm_sin_f32(2*PI*((float)(X.t - 0) / (2*(.8 * tflight + tminstance))) + sinphase) + sinbias;
+  if(sinFlag){
+    Serial1 << sinVal << "\n";
+    M[8].setPosition(sinVal);
+  }
   
   // speed (filter?)
   if (numInStance > 0)

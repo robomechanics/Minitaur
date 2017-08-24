@@ -6,7 +6,7 @@
  * 
  * You are free to use this gait for non-commercial purposes. If you use it in
  * research, please cite 
- * - A. De and D. E. Koditschek, â€œVertical hopper compositions for preflexive and feedback-stabilized quadrupedal bounding, pronking, pacing and trotting,â€� under review, Sep. 2016.
+ * - A. De and D. E. Koditschek, Ã¢â‚¬Å“Vertical hopper compositions for preflexive and feedback-stabilized quadrupedal bounding, pronking, pacing and trotting,Ã¢â‚¬ï¿½ under review, Sep. 2016.
  */
 #include "Bound.h"
 
@@ -230,6 +230,7 @@ bool BoundLeg::update() {
   }
   return false;
 }
+
 
 
 

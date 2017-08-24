@@ -88,3 +88,4 @@ public:
 extern Walk walk;
 
 #endif
+
