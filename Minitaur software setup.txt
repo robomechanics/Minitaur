@@ -1,16 +1,36 @@
-These steps will set up your computer to compile and upload code onto the Minitaur. For now, this must be done in Windows.
+These steps will set up your computer to compile and upload code onto the Minitaur.
 
-1. Follow instructions 2.1.1 - 2.1.2 at https://gitlab.com/ghostrobotics/docs/wikis/getting-started. Note that this requires downloading the correct version of Arduino (1.6.1), as well as SourceTree (a git client - if you already have one, just use that). Links to those downloads are included in the above link. This will add the basic microcontroller extension libraries needed to run code. Also for 2.1.2.4,  you will need to create an empty folder titled "koduino" in the ~/Documents/arduino-1.6.1/hardware folder before you can select it as a destination path.
+1. Download Arduino 1.6.1 for your OS from https://www.arduino.cc/en/Main/OldSoftwareReleases#previous - make sure the arduino folder (the one that has arduino-1.6.1 in it, not the one called "Arduino" which is mostly empty and we won't use) is in your Documents folder.
 
-2. Follow the instructions for 2.1.3, except instead of cloning https://gitlab.com/ghostrobotics/mainboard-libraries.git, instead clone https://github.com/robomechanics/Minitaur.git. This will set up a local repository that tracks our own remote minitaur  library. This library in turn is set up to track the GR mainboard libraries, in addition to containing our own modifications.
+2. Make sure you have some sort of Git client (e.g. GitHub Desktop, SourceTree). If you don't, download SourceTree here - https://www.sourcetreeapp.com/. You don't need an Atlassian account or to import any repositories, so skip any setup related to that.
 
-3. IF YOU DON"T HAVE PYTHON: Follow 2.2.1 of the above link. This will walk you through downloading Python 2.7 via Anaconda (a package manager). Note that the link in step 2.2.1.1 will bring you to a page titled OpenLog Class Reference - you only need to find the "Using Python" header and follow steps 1-6. Make sure you still complete 2.2.1.2 and 2.2.1.3 in the Getting Started Guide though.
-IF YOU DO HAVE PYTHON: Follow 2.2.1.2 and 2.2.1.3 of the getting started guide.
+3. Clone the Koduino repository (https://github.com/avikde/koduino.git) into the hardware folder within arduino so that Documents/arduino-1.6.1-windows/arduino-1.6.1/hardware/koduino is a valid path (or the equivalent on a Mac). This repository allows the arduino IDE to communicate with the specific microcontroller aboard the Minitaur
 
-4. Follow the section titled "Using Arduino IDE" within instruction 2.2. Only do steps 1-7. For step 3, do NOT set Bootloader  to Serial (in the previous step you should have set it to Serial (stm32loader) which is correct ).
+4. Clone the Minitaur repository (https://github.com/robomechanics/Minitaur.git) into your Documents folder. This folder contains the Minitaur specific code, such as the behaviors, communication, and motor controller libraries.
 
-5. Open minitaur_basic.ino, which is located in ~/Minitaur/minitaur_basic. Connect your computer to the USB port on the minitaur. Click the checkmark in the upper left to compile, and the arrow to compile and upload to the Minitaur.
+5. Open Minitaur/minitaur_gaits_pp/minitaur_gaits_pp.ino, (it should open within Arduino). Set the following preferences in Arduino:
+	File->Preferences-> Make sure "Sketchbook location" is the path to Documents/Minitaur
+	File->Preferences-> check  "Display line numbers" (optional, but you'll want it)
+	Tools->Board->F303V(...)
+	Tools->CPU Speed->72MHz
+	Tools->Bootloader->stm32ld
+Restart Arduino, then reopen minitaur_gaits_pp.ino. Click the check mark in the upper left labelled "Verify". This should compile the code. Make sure it compiles before moving on.
 
-Notes:
-- Make sure the motor zeros declared in minitaur_basic.ino are correct for our lab: (const float motZeros[8] = {0.631, 4.076, 1.852, 3.414, 1.817, 1.169, 1.078, 6.252};//Aaron Mini 3/21/17) 
-- Make sure the Minitaur is disconnected from your PC before you turn the power on, otherwise the motors will be disabled due to the safety check in HAL.cpp.
+6. Plug in the minitaur via USB. Make sure Tools->Port has a new option when you plug the minitaur in, and select that option. Click the -> in the upper left corner labelled "Upload". Follow the instructions below depending on what it says after it compiles
+	1) "Programming flash" followed by a progress bar - Hooray, you're done!
+	2) Something about unable to connect to COM1 (or another number) - either you don't have the right port selected, or your computer can't detect something is plugged in for some reason.
+	3) "Unable to connect to bootloader" - This is the most likely response, and happend because there are issues with the stm32ld loader. If you get this, do the following
+		a. In Arduino, select Tools->bootloader->stm32loader
+		b. Make sure you have both python2.7 and pip installed (if you have neither, follow the instructions 1-7 under "Using Python" at http://avikde.me/koduino/html/class_open_log.html).
+		c. In the command line, enter: pip install pyserial progressbar
+		d. Try uploading again
+
+Common Errors
+If Tools->Port is greyed out, make sure Tools->Board is set to F303V...
+When compiling:
+	- If "AbstractMotor.h" isn't found, make sure your sketchbook location is set to .../Documents/Minitaur
+	- If "nvic.h" is not found, make sure Tools->Board is set to F303V...
+
+When uploading:
+	- If you get a "unable to connect to bootloader" error, follow 6.3 above
+	- If you get some error that says something about COM1 or any other number, try restarting Arduino and making sure that Tools->Port has a new option when you plug in the minitaur
