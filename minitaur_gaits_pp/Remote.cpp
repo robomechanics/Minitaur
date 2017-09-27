@@ -80,6 +80,7 @@ void RemoteRC::updateInterrupt() {
   latDes = 0;//lhstick;
 
   if (REMOTE_RC_6CH) {
+    int oldRemoteKnob = remoteKnob;
     //vertDes = constrain(map(rcCmd[4], 5.41, 9.83, 0.0, 1.0), 0, 1);
     // knob: 6.32, 6.84, 7.37, 7.89, 8.95, 9.44 (5.16 when remote off)
       if (rcCmd[5] > 5.5 && rcCmd[5] <= 6.55){
@@ -116,6 +117,9 @@ void RemoteRC::updateInterrupt() {
         remoteKnob = 5;
       }else if(rk6c > knobLim){
         remoteKnob =6;
+      }
+      if(remoteKnob != oldRemoteKnob){
+        lastSignal = millis();
       }
   }
 

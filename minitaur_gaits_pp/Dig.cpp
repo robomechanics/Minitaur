@@ -51,7 +51,7 @@ void Dig::update() {
   float sweep = -0.5;
   float lift = -1.2;
   
-  int time = X.t % (tLower+tReady+tSweep+tRaise+tReturn);
+  int time = (X.t - remoteRC.lastSignal) % (tLower+tReady+tSweep+tRaise+tReturn);
   
   for(int i=0; i<4; ++i){
     leg[i].setGain(ANGLE, kAng+0.1);

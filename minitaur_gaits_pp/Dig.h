@@ -9,6 +9,7 @@
 
 #include "VirtualLeg.h"
 #include <Behavior.h>
+#include "Remote.h"
 
 class Dig : public Behavior {
 public:
