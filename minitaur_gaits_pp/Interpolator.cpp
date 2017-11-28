@@ -1,6 +1,5 @@
 #include "Interpolator.h"
 #include <cmath>
-#include <iostream>
 using namespace std;
 
 Interpolator::Interpolator(const int a) {
