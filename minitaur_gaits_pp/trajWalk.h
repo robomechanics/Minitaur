@@ -1,15 +1,15 @@
 /**
 Written by Joe Norby
  */
-#ifndef traj_h
-#define traj_h
+#ifndef trajWalk_h
+#define trajWalk_h
 
 #include "VirtualLeg.h"
 #include "Interpolator.h"
 #include <Behavior.h>
 #include "Remote.h"
 
-class Traj : public Behavior {
+class TrajWalk : public Behavior {
 public:
 
   void begin();
@@ -22,6 +22,6 @@ public:
   void signal() {
   }
 };
-extern Traj traj;
+extern TrajWalk trajwalk;
 
 #endif

@@ -34,6 +34,17 @@ float Interpolator::getSingleInterp(float * targets, float * times, int t) {
   return pos;
 }
 
+float Interpolator::getSingleZOH(float * targets, float * times, int t) {
+  float pos;
+  index=0;
+  for(int j=0;j<lengthTime;j++)
+  {
+    if(times[j]<=t && t<times[j+1]) index = j;
+  }
+  pos = targets[index];
+  return pos;
+}
+
 float Interpolator::getSinglePVTInterp(float * pos,float * vel, float * times, int t){
   for(int i=0;i<lengthTime;i++) vel[i] = vel[i]*0.001; //Rescale from [dist]/ms to [dist]/s
   index=0;

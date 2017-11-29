@@ -9,6 +9,7 @@ class Interpolator {
   Interpolator(int);
   float * getInterps(float *, float *);
   float getSingleInterp(float *, float *, int);
+  float getSingleZOH(float *, float *, int);
   float getSinglePVTInterp(float *, float *, float *, int);
 
  private:

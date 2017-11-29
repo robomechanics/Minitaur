@@ -30,15 +30,15 @@ Peripheral *imu = &imuVN100;// imuVN100 / imuMPU6000
 
 // This must be set per robot zeros must be checked before running!
 //const float motZeros[8] = {2.504, 3.435, 2.335, 3.076, 6.067, 4.896, 6.190, 1.493}; // Carbon FiberTaur
-const float motZeros[8] = {2.570, 3.167, 3.777, 3.853, 2.183, 1.556, .675, 2.679}; // RML Ellie
-//const float motZeros[8] = {0.631, 4.076, 1.852, 3.414, 1.817, 5.500, 1.078, 6.252}; //RML Odie
+//const float motZeros[8] = {2.570, 3.167, 3.777, 3.853, 2.183, 1.556, .675, 2.679}; // RML Ellie
+const float motZeros[8] = {0.631, 4.076, 1.852, 3.414, 1.817, 5.500, 1.078, 6.252}; //RML Odie
 
 
 
 // Behavior array: add behaviors here. First one in the array is the starting behavior.
 // Make sure the #include is in Remote.h
 const int NUM_BEHAVIORS = 5;
-Behavior *behaviorArray[NUM_BEHAVIORS] = {&walk, &bound, &dig, &frontFlip, &imuReset};
+Behavior *behaviorArray[NUM_BEHAVIORS] = {&walk, &bound, &dig, &trajwalk, &traj};
 
 // ======================================================================
 
