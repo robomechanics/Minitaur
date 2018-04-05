@@ -14,6 +14,7 @@
 #include "SoftStart.h"
 #include "IMUObject.h"
 #include "Walk.h"
+#include "SpinTail.h"
 // ====== To save compile time if not using MPU6000, comment next two lines =====
 // #include <MPU6000.h>
 // #include <Eigen.h>
@@ -39,8 +40,8 @@ const float motZeros[9] = {2.570, 3.167, 3.777, 3.853, 2.183, 1.556, .675, 2.679
 
 // Behavior array: add behaviors here. First one in the array is the starting behavior.
 // Make sure the #include is in Remote.h
-const int NUM_BEHAVIORS = 2;
-Behavior *behaviorArray[NUM_BEHAVIORS] = {&bound, &walk};
+const int NUM_BEHAVIORS = 3;
+Behavior *behaviorArray[NUM_BEHAVIORS] = {&bound, &walk, &spinTail};
 
 // ======================================================================
 
@@ -123,8 +124,8 @@ void controlLoop() {
   
   if (remoteRC.remoteKnob == 3) {
       enable(false);
-      M[8].setGain(.5);
-      M[8].setPosition(0);
+      //M[8].setGain(.5);
+      //M[8].setPosition(0);
   }
   
   halUpdate();
@@ -166,9 +167,9 @@ void setup() {
   
 // TAIL SETUP  
   M[8].enable(true);
-  M[8].setGain(0.1);
+  //M[8].setGain(0.1);
 //  M[8].setPosition(-X.pitch);
-  M[8].setPosition(0);
+  //M[8].setPosition(0);
 
   // // test no remote
   // delay(10000);
