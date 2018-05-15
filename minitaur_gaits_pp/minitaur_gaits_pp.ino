@@ -15,6 +15,7 @@
 #include "IMUObject.h"
 #include "Walk.h"
 #include "SpinTail.h"
+#include "KillAll.h"
 // ====== To save compile time if not using MPU6000, comment next two lines =====
 // #include <MPU6000.h>
 // #include <Eigen.h>
@@ -40,8 +41,8 @@ const float motZeros[9] = {2.570, 3.167, 3.777, 3.853, 2.183, 1.556, .675, 2.679
 
 // Behavior array: add behaviors here. First one in the array is the starting behavior.
 // Make sure the #include is in Remote.h
-const int NUM_BEHAVIORS = 3;
-Behavior *behaviorArray[NUM_BEHAVIORS] = {&bound, &walk, &spinTail};
+const int NUM_BEHAVIORS = 4;
+Behavior *behaviorArray[NUM_BEHAVIORS] = {&bound, &walk, &spinTail, &killAll};
 
 // ======================================================================
 
@@ -62,11 +63,11 @@ void debug() {
   //Serial1 << X.Vbatt << "\t";// If resistor is not populated, will get > 50
 
   // IMU --------------------------------
-//  Serial1 << X.roll << "\t" << X.pitch << "\t" << X.yaw << "\t";
+  //  Serial1 << X.roll << "\t" << X.pitch << "\t" << X.yaw << "\t";
   //Serial1 << X.rolldot << "\t" << X.pitchdot << "\t" << X.yawdot;
 
-//  Serial1 << X.Vbatt << "\t";// If resistor is not populated, will get > 50
- 
+  //  Serial1 << X.Vbatt << "\t";// If resistor is not populated, will get > 50
+
 
   // IMU --------------------------------
   //  Serial1 << X.roll << "\t" << X.pitch << "\t" << X.yaw << "\t";
@@ -82,25 +83,25 @@ void debug() {
   // for (int i=0; i<16; ++i) {
   //   Serial1 << remoteComputer.computerPacket.params[i] << " ";
   // }
-  
+
   // // MOTORS ------------------------
-  for (int i=0; i<NMOT; ++i) {
+  for (int i = 0; i < NMOT; ++i) {
     // UNCOMMENT THIS TO ZERO LEGS (Get raw pos when in jig; type into motZeros)
     // Serial1 << _FLOAT(M[i].getRawPosition(), 3) << "\t";
     // Serial1 << M[i].getTorque() << "\t";
-  
+
     // Power -------------------------------
     //Serial1 << X.dq[i] << " " << X.command[i] << " " << X.power[i] << "\t";
-  
-  //Serial1 << X.log1;
-  
-  
 
-  // // LEG -----------------------------
+    //Serial1 << X.log1;
+
+
+
+    // // LEG -----------------------------
     //Serial1 << X.dq[i] << " " << X.command[i] << " " << X.power[i] << "\t";
   }
 
-   // LEG -----------------------------
+  // LEG -----------------------------
   // for (int i=0; i<4; ++i) {
   //   // Serial1 << "[" << leg[i].getPosition(EXTENSION) << ","  << leg[i].getPosition(ANGLE) << "]\t";
   //   // leg forces
@@ -109,42 +110,42 @@ void debug() {
   // }
 
   //Serial1 << "\n";
-//   for (int i=0; i<4; ++i) {
-//     Serial1 << "[" << leg[i].getVelocity(EXTENSION) << ","  << leg[i].getVelocity(ANGLE) << "] TESTING\t";
-//  //   // leg forces
-//  //   // Serial1 << ux[i] << "," << uz[i] << "\t";
-//  //   // Serial1 << leg[i].getVelocity(EXTENSION) << "\t";
-//   }
-//
-//  Serial1 << "\n";
+  //   for (int i=0; i<4; ++i) {
+  //     Serial1 << "[" << leg[i].getVelocity(EXTENSION) << ","  << leg[i].getVelocity(ANGLE) << "] TESTING\t";
+  //  //   // leg forces
+  //  //   // Serial1 << ux[i] << "," << uz[i] << "\t";
+  //  //   // Serial1 << leg[i].getVelocity(EXTENSION) << "\t";
+  //   }
+  //
+  //  Serial1 << "\n";
 }
 
 void controlLoop() {
   uint32_t tic = micros();
-  
+  enable(false);
   if (remoteRC.remoteKnob == 3) {
-      enable(false);
-      //M[8].setGain(.5);
-      //M[8].setPosition(0);
+    enable(false);
+    //M[8].setGain(.5);
+    //M[8].setPosition(0);
   }
-  
+
   halUpdate();
 
   // BEHAVIOR
   // "soft start"
   if ((behavior == &bound || behavior == &walk) && softStart.running()) {
     float behavExtDes = (behavior == &bound) ? 1.5 : 1.0;
-    softStart.update(behavExtDes); 
+    softStart.update(behavExtDes);
   } else {
     behavior->update();
   }
 
-//  Have the tail revert to standing position when not in tail mode
-//  if (behavior != &tail) {
-//    M[8].setPosition((float)X.t/1000.0);
-////    M[8].setOpenLoop(0.04*arm_sin_f32(0.001*X.t));
-//    Serial1 << 0.04*arm_sin_f32(0.001*X.t) << "\n";
-//  }
+  //  Have the tail revert to standing position when not in tail mode
+  //  if (behavior != &tail) {
+  //    M[8].setPosition((float)X.t/1000.0);
+  ////    M[8].setOpenLoop(0.04*arm_sin_f32(0.001*X.t));
+  //    Serial1 << 0.04*arm_sin_f32(0.001*X.t) << "\n";
+  //  }
 
   // M[8].setPosition(-X.pitch);
 
@@ -164,11 +165,11 @@ void setup() {
     enable(true);
   // first behavior
   behavior->begin();
-  
-// TAIL SETUP  
+
+  // TAIL SETUP
   M[8].enable(true);
   //M[8].setGain(0.1);
-//  M[8].setPosition(-X.pitch);
+  //  M[8].setPosition(-X.pitch);
   //M[8].setPosition(0);
 
   // // test no remote

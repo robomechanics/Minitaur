@@ -24,6 +24,8 @@
 // ===== Include behaviors here =====
 #include "Bound.h"
 #include "Walk.h"
+#include "SpinTail.h"
+#include "KillAll.h"
 // ==================================
 
 

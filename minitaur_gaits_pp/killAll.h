@@ -4,20 +4,18 @@
  * Proprietary and confidential
  * Written by Avik De <avik@ghostrobotics.io>
  */
-#ifndef SpinTail_h
-#define SpinTail_h
+#ifndef KillAll_h
+#define KillAll_h
 
 #include "VirtualLeg.h"
 #include <Behavior.h>
 #include "Remote.h"
 
-class SpinTail : public Behavior {
+class KillAll : public Behavior {
 public:
 //  bool bAbsLegAngle;//should remain false for MPU6000 use
 //  // "autopilot" sets desired speed by itself
 //  bool bAutopilot;
-  int tStart;
-  bool go=0;
 //  float headingDes;
 //  // bool waitingToStart;
 //
@@ -33,6 +31,6 @@ public:
   void signal() {
   }
 };
-extern SpinTail spinTail;
+extern KillAll killAll;
 
 #endif
