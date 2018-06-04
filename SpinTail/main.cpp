@@ -14,6 +14,8 @@
 #include <unistd.h>
 
 float theVel;
+float tailVel;
+bool newTest = true;
 
 
 
@@ -26,7 +28,7 @@ enum TSMode {
 	TS_WAIT = 0, TS_SPIN
 };
 TSMode mode;
-const float motZeros[8] = {2.570, 3.167, 3.777, 3.853, 2.183, 1.556, .675, 2.679}; // RML Ellie
+const float motZeros[9] = {2.570, 3.167, 3.777, 3.853, 2.183, 1.556, .675, 2.679, 1.000}; // RML Ellie w/aero tail
 
 float avg(float *myArray, int len){
   float sum = 0;
@@ -40,7 +42,15 @@ float avg(float *myArray, int len){
 
 void debug(){
 	if(mode == TS_SPIN){
-		printf("%f\n", theVel);
+		float DF =joint[8].getOpenLoop();
+		if(newTest){
+			printf("XXXXXXXXXXX new trial, DF= ");
+			printf("%f", DF);
+			printf(" XXXXXXXXXXX\n");
+			newTest = false;
+		}
+		float theDF = joint[8].getOpenLoop();
+		printf("%f\t %f\t %f\n", theVel, tailVel, theDF);
 	}
 }
 
@@ -49,10 +59,10 @@ public:
 	//TSMode mode; //Current state within state-machine
 
 	float posDes; //Desired position
-	float curDF;
+	float curDF = .1;
 	int dir = 1; // 1 or -1, direction to spin, + is for CCW - for CW
 	float DFarray[6] = {.1, .3, .5, .7, .9, 1}; // array of selectable duty factors
-	float DF = dir*DFarray[C->behavior.id];    //Desired duty factor to spin the tail
+	float DF = 0;    //Desired duty factor to spin the tail, start at rest
 
 	uint32_t tLast; // System time @ last velocity sample
 	
@@ -72,70 +82,104 @@ public:
 
 	void update() {
 		C->mode = RobotCommand_Mode_JOINT;
+		curDF = joint[8].getOpenLoop();
 		if(mode == TS_WAIT){
-			//joint[0].setGain(0.01, 0.006); //Sets P and D gains for position based control
-			//joint[0].setPosition(0); // set the motor to 0 
-			curDF = joint[0].getOpenLoop();
-			if(S->millis - tLast > 50 && curDF > 0.05){
-				curDF -= .1*dir;
-				joint[0].setOpenLoop(curDF);
+			//joint[8].setGain(0.01, 0.006); //Sets P and D gains for position based control
+			//joint[8].setPosition(0); // set the motor to 0 
+			//curDF = joint[8].getOpenLoop();
+			if(S->millis - tLast > 80 && abs(curDF) > 0.01){
+				curDF = dir*(abs(curDF)-.1);
+				joint[8].setOpenLoop(curDF);
 				tLast = S->millis;
 			}
-			if(C->behavior.pose.position.z > .2) dir = 1;
-			else if(C->behavior.pose.position.z < -.2) dir = -1;
+			if(abs(curDF) < .01){
+				if(C->behavior.pose.position.z > .2) dir = 1;
+				else if(C->behavior.pose.position.z < -.2) dir = -1;
+				joint[8].setOpenLoop(0);
+			}
+			newTest = true;
 		}
 		else if(mode == TS_SPIN){
-			DF = DFarray[C->behavior.id]; // set duty factor using joystick knob
-			joint[0].setOpenLoop(DF);//Set motor to spin at desired DF
-			/*static float prevPos = joint[0].getPosition();
-  			static int initialize = 1;
- 			//static int prevTime = S->millis;
-  			int dt;*/
-  			const int velocityBuffer = 100;
-  			static float velocities [velocityBuffer];
+			if(S->millis - tLast > 100 && abs(curDF) - DFarray[C->behavior.id] > 0.05){
+				curDF = dir*(abs(curDF)+.1);
+				joint[8].setOpenLoop(curDF);
+				tLast = S->millis;
+			}
+			else if(abs(curDF) - DFarray[C->behavior.id] < .01){
+				curDF = DFarray[C->behavior.id]; // set duty factor using joystick knob
+				joint[8].setOpenLoop(dir*curDF); //Set motor to spin at desired DF
+			}
+			static float prevPos = joint[8].getPosition();
+ 			static int prevTime = clockTimeUS;
+  			int dt;
+  			const int velocityBuffer = 500;
+  			static float posVelocities [velocityBuffer];
+  			static float driverVelocities [velocityBuffer];
   			static int counter = 0;
   			static bool filledUpArray = 0;
-  			/*float pos;
+  			float pos;
   			float normalizedPos;
-  			float DF;
   			float dtheta;
-  			float instantVelocity;*/
-  			float betterVelocity;
-  
-  			/*pos = joint[0].getPosition();
+  			float instantVelocity;
+  			float betterPosVelocity;
+  			float betterDriverVelocity;
+  			//float tailVel;
+  			
+  			pos = joint[8].getPosition();
   			normalizedPos = pos;
-  			if (pos < prevPos) {
+  			if (pos < prevPos && dir == 1) {
     			normalizedPos = pos + 2*3.1415826;
   			}
-  			DF = joint[0].getOpenLoop();
-  			theVel = joint[0].getVelocity();
+  			else if (pos > prevPos && dir == -1){
+  				normalizedPos = pos - 2*3.1415826;
+  			}
+  			//DF = joint[8].getOpenLoop();
+  			
    			dtheta = normalizedPos - prevPos;
-    		if (dtheta < 0){
-    			theVel = pos;
+    		prevPos = pos;
+    		dt = clockTimeUS-prevTime;
+    		if(dt < 1){ 
+    			dt = 1;
     		}
-    		dt = S->millis-prevTime;
-    		instantVelocity = 1000.0 * dtheta/float(dt);
-    		velocities[counter] = instantVelocity;*/
-    		
-    		
-   			if (S->millis - tLast > 100){
-   				velocities[counter] = joint[0].getVelocity();
-   				counter++;
-   			}
 
-   			if(counter == velocityBuffer-1) filledUpArray = 1; //now we can average the velocities
-   			
+    		instantVelocity = 1000000.0 * dtheta/float(dt);
+    		posVelocities[counter] = instantVelocity;
+    		prevTime = clockTimeUS;
+    		
+    		driverVelocities[counter] = joint[8].getVelocity();
+   			/*if (S->millis - tLast > 100){
+   				posVelocities[counter] = joint[8].getVelocity();
+   				counter++;
+   			}*/
+
+			/*if (curDF > .2) {
+				curDF = .2;
+			}
+			else if (driverVelocities[counter] - 6.28 > .01) {
+				curDF -= .0001;
+			}
+			else if (driverVelocities[counter] - 6.28 < -.01) {
+				curDF += .0001;
+			}
+			joint[8].setOpenLoop(curDF*dir);*/
+
+   			if(counter == velocityBuffer-1) filledUpArray = 1; //now we can average the posVelocities
+   			counter++;
     		if (filledUpArray == 1){
-      			betterVelocity = avg(velocities, counter);
-      			theVel = betterVelocity;
+      			betterPosVelocity = avg(posVelocities, velocityBuffer);
+      			betterDriverVelocity = avg(driverVelocities, velocityBuffer);
+      			tailVel = betterPosVelocity;
+      			theVel = betterDriverVelocity;
       			counter = 0;
       			filledUpArray = 0;
-      			tLast = S->millis;
+      			//tLast = S->millis;
       		}
     		/*else{
       			betterVelocity = instantVelocity;
-      			theVel = betterVelocity;  
+      			tailVel = betterVelocity;  
       		}*/
+      		
+      		
 		}
 	}
 
@@ -151,8 +195,8 @@ int main(int argc, char *argv[]) {
 
 	#if defined(ROBOT_MINITAUR)
 	init(RobotParams_Type_MINITAUR, argc, argv);
-	for (int i = 0; i < P->joints_count; ++i)
-		P->joints[i].zero = motZeros[i]; //Add motor zeros from array at beginning of file
+	/*for (int i = 0; i < P->joints_count+1; ++i)
+		P->joints[i].zero = motZeros[i]; //Add motor zeros from array at beginning of file*/
 	#elif defined(ROBOT_MINITAUR_E)
 	init(RobotParams_Type_MINITAUR_E, argc, argv);
 	JoyType joyType = JoyType_FRSKY_XSR;
@@ -160,6 +204,28 @@ int main(int argc, char *argv[]) {
 	#else
 	#error "Define robot type in preprocessor"
 	#endif
+
+	// Configure joints
+	#define NUM_MOTORS 9
+	//const float zeros[NUM_MOTORS] = {0, 0, 0, 0, 0, 0, 0, 0};
+	const float directions[NUM_MOTORS] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+	P->joints_count = S->joints_count = C->joints_count = NUM_MOTORS;
+	for (int i = 0; i < P->joints_count; i++)
+	{
+		// Set zeros and directions
+		P->joints[i].zero = motZeros[i];
+		P->joints[i].direction = directions[i];
+	}
+	// Set the joint type; see JointParams
+	P->joints[8].type = JointParams_Type_GRBL;
+
+// Set the *physical* address (e.g. etherCAT ID, PWM port, dynamixel ID, etc.)
+	P->joints[8].address = 8;
+
+// If there is a gearbox the joint electronics doesn't know about, this could be > 1.
+// Do not set to 0.
+	P->joints[8].gearRatio = 1.0;
+	P->limbs_count = 0; 
 	TailSpin tailSpin; //Declare instance of our behavior
 	//Disable the safety shut off feature:
 	//IT IS POSSIBLE TO DAMAGE THE MOTOR; BE CAREFUL WHEN USING
@@ -176,7 +242,7 @@ int main(int argc, char *argv[]) {
 	cfg.baud = 115200;
 	cfg.mode = SERIAL_8N1;
 	ioctl(STDOUT_FILENO, IOCTL_CMD_SERIAL_PORT_CFG, &cfg);
-	setDebugRate(10);
+	setDebugRate(2);
 
 	return begin();
 }
