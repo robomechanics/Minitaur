@@ -222,8 +222,10 @@ bool BoundLeg::update() {
     }
   } else {
     // stand
+//    setGain(EXTENSION, p->kExtStand);
+//    setGain(ANGLE, p->kAngStand, p->kAngStandD);
     setGain(EXTENSION, p->kExtStand);
-    setGain(ANGLE, p->kAngStand, p->kAngStandD);
+    setGain(ANGLE, p->kAngStand);
     setPosition(ANGLE, angDes, 0);
     setPosition(EXTENSION, pBound->flightPos-0.6, 0);
     X.xd = 0;

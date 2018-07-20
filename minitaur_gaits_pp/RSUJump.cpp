@@ -45,7 +45,7 @@ void RSUJump::begin(){
 void RSUJump::update() {
 	MinitaurLeg::useLengths = false;
 
-	float legAng = -X.pitch + 0.4;//map(vertDes, 0, 1, 0.4, 0.2);
+	float legAng = -X.pitch + 0.1;//map(vertDes, 0, 1, 0.4, 0.2);
 	switch (mode) {
 		default:
 		case RSUJ_STAND:
@@ -65,8 +65,8 @@ void RSUJump::update() {
 			}
 
 			for (int i=0; i<4; ++i) {
-				leg[i].setGain(ANGLE,.9,.002);
-				leg[i].setGain(EXTENSION,.3,.002); //was 12
+				leg[i].setGain(ANGLE,.9);
+				leg[i].setGain(EXTENSION,.3); //was 12
 				leg[i].setPosition(ANGLE,an0);
 				leg[i].setPosition(EXTENSION,ex0);
 			}
@@ -90,8 +90,8 @@ void RSUJump::update() {
 			}
 
 			for (int i=0; i<4; ++i) {
-				leg[i].setGain(ANGLE,.9,.002);
-				leg[i].setGain(EXTENSION,.3,.002); //was 12
+				leg[i].setGain(ANGLE,.9);
+				leg[i].setGain(EXTENSION,.3); //was 12
 				leg[i].setPosition(ANGLE,an0);
 				leg[i].setPosition(EXTENSION,ex0);
 			}
@@ -276,8 +276,8 @@ void RSUJump::update() {
 			}
 
 			for (int i=0; i<4; ++i) {
-				leg[i].setGain(ANGLE,.9,.002);
-				leg[i].setGain(EXTENSION,.3,.002); //was 12
+				leg[i].setGain(ANGLE,.9);
+				leg[i].setGain(EXTENSION,.3); //was 12
 				leg[i].setPosition(ANGLE,an0);
 				leg[i].setPosition(EXTENSION,ex0);
 			}

@@ -38,7 +38,7 @@ const float motZeros[8] = {2.452, 2.460,3.346,3.093,1.401,3.906,4.584,5.764}; //
 // Behavior array: add behaviors here. First one in the array is the starting behavior.
 // Make sure the #include is in Remote.h
 const int NUM_BEHAVIORS = 5;
-Behavior *behaviorArray[NUM_BEHAVIORS] = {&walk, &bound, &dig, &trajwalk, &traj};
+Behavior *behaviorArray[NUM_BEHAVIORS] = {&bound, &walk, &dig};
 
 // ======================================================================
 

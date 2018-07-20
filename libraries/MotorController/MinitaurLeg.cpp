@@ -7,7 +7,7 @@
 #include "MinitaurLeg.h"
 
 // defaults are for minitaur, can be overridden for centaur etc.
-float MinitaurLeg::l1 = 0.1;
+float MinitaurLeg::l1 = 0.09;
 float MinitaurLeg::l2 = 0.2;
 bool MinitaurLeg::useLengths = false;
 
