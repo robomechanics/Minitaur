@@ -10,7 +10,6 @@
 #include <Smath.h>
 #include <Motor.h>
 #include <Behavior.h>
-#include <ReorientableBehavior.h>
 #include <unistd.h>
 
 
@@ -23,17 +22,98 @@ unsigned long prevTime = S->millis;
 float k = 0;
 float c = 0;
 float fallTime = 0;
-int touchdowns = 0;
+int counter - 0;
+
+float LP0[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float LP1[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float LP2[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float LP3[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float LP4[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float LP5[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float LP6[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float LP7[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float *last_pos[8] = {&LP0, &LP1, &LP2, &LP3, &LP4, &LP5, &LP6, &LP7};
+
+float CP0[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float CP1[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float CP2[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float CP3[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float CP4[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float CP5[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float CP6[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float CP7[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
+float *cur_pos[8] = {&CP0, &CP1, &CP2, &CP3, &CP4, &CP5, &CP6, &CP7};
+
+float hold_pos[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+bool crouched[8] = {false, false, false, false, false, false, false, false};
+
+float avg(float &input_arr[8]) {
+	float sum = 0;
+	for (int i = 0; i < input_arr.size(); i++) {
+		sum += input_arr[i];
+	}
+	return sum;
+}
+
+void update_pos(float &input_arr[8], float val) {
+	for (int i = 1; i < input_arr.size(); i++) {
+		input_arr[i] = input_arr[i - 1];
+	}
+	input_arr[0] = val;
+}
+
 
 enum FLMode {
 	FL_WAIT_AIR = 0, FL_Falling, FL_Landing, FL_WAIT_GND
 };
-FLMode mode;
+FLMode mode = FL_WAIT_AIR;
 const float motZeros[9] = {2.570, 2.036, 3.777, 3.853, 2.183, 1.556, .675, 2.679, 2.61}; // RML Ellie w/aero tail
 
 bool isFront(int I){
-	bool isfront = I % 2;
-	return isfront;
+	bool isFront;
+	switch(I){
+		case 0: isFront = true;
+			break;
+		case 1: isFront = true;
+			break;
+		case 2: isFront = false;
+			break;
+		case 3: isFront = false;
+			break;	
+		case 4: isFront = true;
+			break;
+		case 5: isFront = true;
+			break;
+		case 6: isFront = false;
+			break;
+		case 7: isFront = false;
+			break;		
+	}		
+	return isFront;
+}
+
+float isOut(int I){
+	// determine of motor is outboard or inboard
+	float isOut;
+	switch(I){
+		case 0: isOut = 1;
+			break;
+		case 1: isOut = -1;
+			break;
+		case 2: isOut = 1;
+			break;
+		case 3: isOut = -1;
+			break;	
+		case 4: isOut = -1;
+			break;
+		case 5: isOut = 1;
+			break;
+		case 6: isOut = -1;
+			break;
+		case 7: isOut = 1;
+			break;		
+	}		
+	return isOut;
 }
 
 void debug(){
@@ -50,6 +130,17 @@ public:
 		mode = FL_WAIT_AIR; //Start in wait mode
 		prevTime = S->millis;// Set tLast at onset 
 		C->mode = RobotCommand_Mode_JOINT;
+		P->joints[8].type = JointParams_Type_GRBL;
+
+
+// Set the *physical* address (e.g. etherCAT ID, PWM port, dynamixel ID, etc.)
+		P->joints[8].zero = 2.61;
+		P->joints[8].direction = 1;
+		P->joints[8].address = 8;
+
+		P->joints[8].gearRatio = 1.0;
+
+		P->limbs_count = 0;
 	}
 
 	//sig is mapped from remote; here, 3 corresponds to pushing the left stick to the right
@@ -59,104 +150,98 @@ public:
 
 	}*/
 
-		void update() {
+	void update() {
+
+		/*if(C->behavior.mode == 0){
+			return;
+		}
+		if(C->behavior.id != 0){
+			return;
+		}*/
 		if(mode == FL_WAIT_AIR){
 		//float extension = map(C->behavior.pose.position.z, -1.0, 1.0, 0.2, 0.3);
 
 		// And angle is calculated as the negative pitch value of the robot to keep the legs pointing down.
 		//float angle = -S->imu.euler.y;
-
+		
 		
 			for(int i = 0; i < 8; i++){
-				joint[i].setGain(.1,.006);
-				joint[i].setPosition(1.57);
+				joint[i].setGain(.03,.006);
 			}
 			joint[8].setGain(.2,.006);
-			joint[8].setPosition(0);
+			
 
-			if(abs(S->imu.linear_acceleration.x) < 4.5 && S->millis - prevTime > 5000){
-				mode = FL_Falling;
-				prevTime = S->millis;
+			for (int i = 0; i < 8; ++i) {
+				update_pos(cur_pos[i],joint[i].getPosition());
+				if (!crouched[i]) {
+					if (avg(cur_pos[i]) - avg(last_pos[i]) > 0.05) {
+						hold_pos[i] = avg(last_pos[i]);
+						joint[i].setPosition(hold_pos[i]);
+						//joint[i].setGain(.2, .005);
+						crouched[i] = true;
+					}
+					else {
+						joint[i].setPosition(2.5);
+					}
+				}
+				else {
+					joint[i].setPosition(hold_pos[i]);
+				}
+				counter++;
+				if (counter == 8) {
+					*last_pos[i] = *cur_pos[i];
+					counter = 0;
+				}
 			}
 		}
 		else if(mode == (FL_Falling)){
 			fallTime = (S->millis - prevTime);
-			//float angDes;
-			//float angle = S->imu.euler.y;
 
 			
-			if(joint[8].getPosition() < 2.5 && joint[8].getPosition() > -1){
+			if(joint[8].getPosition() < 2.9 && joint[8].getPosition() > -1){
 				joint[8].setOpenLoop(-1);
 			}	
 			else{
+
 				joint[8].setPosition(3.14159);
 			}
 			
-			for(int i = 0; i < 8; i++){
-				joint[i].setPosition(1.57);
-			}
 			
-			/*if(abs(angle < .8)){
-				for (int i = 0; i < P->limbs_count; ++i)
+			float angle = S->imu.euler.y;
+			
+			if(abs(angle < 1.2)){
+				for (int i = 0; i < 8; ++i)
 				{
-					angDes = (isFront(i+1)) ? -S->imu.euler.y - 0.1 : -S->imu.euler.y + 0.2; // from first hop
-				// Set leg angles
-					limb[i].setGain(ANGLE, 0.8, 0.03);
-					limb[i].setGain(EXTENSION, 60, 3);
-					limb[i].setPosition(ANGLE, angDes);
-					limb[i].setPosition(EXTENSION, .24);
-					if(limb[i].getForce(EXTENSION) > 20 && fallTime > 100){
-						mode = FL_Landing;
-						prevTime = S->millis;
-					}
+					//angDes = (isFront(i)) ? S->imu.euler.y - 0.1 : S->imu.euler.y + .1; // from first hop
+				
+					last_pos[i]  = joint[i].getPosition();
+					joint[i].setGain(.8, .006);
+					
+					joint[i].setPosition(3.14+isOut(i)*angle-.5);
+					
+					
 				}
 
-			}*/
+			}
+			if(fallTime > 50){//abs(S->imu.linear_acceleration.z) > 1){
+				mode = FL_Landing;
+				prevTime = S->millis;
+						
+			}
+			
 		}
 		else if(mode == FL_Landing){
 
-			C->mode = RobotCommand_Mode_JOINT;
-			joint[8].setOpenLoop(0);
-			C->mode = RobotCommand_Mode_LIMB;
+			joint[8].setPosition(3.14);
+			
+			
 
-
-			for(int i = 0; i < 4; i++){
-				limb[i].setPosition(EXTENSION, .24);
-				//P->limbs[i].type = LimbParams_Type_SYMM5BAR_EXT_RAD;
-				//limb[i].setOpenLoop(EXTENSION,1);
-				/*if(limb[i].getVelocity(EXTENSION) > 0 && S->millis - prevTime > 25){
-					mode = FL_WAIT_GND;
-					prevTime = S->millis;
-				}*/
-			}
 		}
-		/*else if(mode == FL_WAIT_GND){
-			float extension = map(C->behavior.pose.position.z, -1.0, 1.0, 0.15, 0.16);
+		else if(mode == FL_WAIT_GND){
 
-			C->mode = RobotCommand_Mode_JOINT;
-			joint[8].setOpenLoop(0);
-			C->mode = RobotCommand_Mode_LIMB;
-		// And angle is calculated as the negative pitch value of the robot to keep the legs pointing down.
-			float angle = -S->imu.euler.y;
 
-		// For each of the four legs:
-			for (int i = 0; i < P->limbs_count; ++i)
-			{
-			// Set limb type
-				P->limbs[i].type = LimbParams_Type_SYMM5BAR_EXT_M;
+		}
 
-			// Set leg angles
-				limb[i].setGain(ANGLE, 0.8, 0.03);
-				limb[i].setPosition(ANGLE, angle);
-
-			// Set leg extensions
-				limb[i].setGain(EXTENSION, 70, 3);
-				limb[i].setPosition(EXTENSION, extension);
-			}
-			/*if(S->millis-prevTime > 10000){
-				mode = FL_WAIT_AIR;
-			}
-		}*/
 	}
 
 	bool running() {
@@ -171,8 +256,8 @@ int main(int argc, char *argv[]) {
 
 	#if defined(ROBOT_MINITAUR)
 	init(RobotParams_Type_MINITAUR, argc, argv);
-	/*for (int i = 0; i < P->joints_count+1; ++i)
-		P->joints[i].zero = motZeros[i]; //Add motor zeros from array at beginning of file*/
+
+		
 	#elif defined(ROBOT_MINITAUR_E)
 	init(RobotParams_Type_MINITAUR_E, argc, argv);
 	JoyType joyType = JoyType_FRSKY_XSR;
@@ -218,16 +303,12 @@ int main(int argc, char *argv[]) {
 	//Disable the softStart feature
 	softStartEnable(true);
 	//Remove default behaviors from behaviors vector
-	behaviors.clear();
+	
 	//add our behavior to behaviors vector
 	behaviors.push_back(&tailSpin);
-
-	SerialPortConfig cfg;
-	cfg.baud = 115200;
-	cfg.mode = SERIAL_8N1;
-	ioctl(STDOUT_FILENO, IOCTL_CMD_SERIAL_PORT_CFG, &cfg);
-	setDebugRate(100);
+	
 
 	return begin();
+	
 }
 
