@@ -22,52 +22,17 @@ unsigned long prevTime = S->millis;
 float k = 0;
 float c = 0;
 float fallTime = 0;
-int counter - 0;
-
-float LP0[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float LP1[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float LP2[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float LP3[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float LP4[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float LP5[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float LP6[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float LP7[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float *last_pos[8] = {&LP0, &LP1, &LP2, &LP3, &LP4, &LP5, &LP6, &LP7};
-
-float CP0[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float CP1[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float CP2[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float CP3[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float CP4[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float CP5[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float CP6[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float CP7[8] = { 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5 };
-float *cur_pos[8] = {&CP0, &CP1, &CP2, &CP3, &CP4, &CP5, &CP6, &CP7};
-
-float hold_pos[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+float last_pos[8] = {3, 3, 3, 3, 3, 3, 3 ,3};
+float cur_pos[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+float hold_pos[8] = {2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5};
 bool crouched[8] = {false, false, false, false, false, false, false, false};
-
-float avg(float &input_arr[8]) {
-	float sum = 0;
-	for (int i = 0; i < input_arr.size(); i++) {
-		sum += input_arr[i];
-	}
-	return sum;
-}
-
-void update_pos(float &input_arr[8], float val) {
-	for (int i = 1; i < input_arr.size(); i++) {
-		input_arr[i] = input_arr[i - 1];
-	}
-	input_arr[0] = val;
-}
 
 
 enum FLMode {
 	FL_WAIT_AIR = 0, FL_Falling, FL_Landing, FL_WAIT_GND
 };
 FLMode mode = FL_WAIT_AIR;
-const float motZeros[9] = {2.570, 2.036, 3.777, 3.853, 2.183, 1.556, .675, 2.679, 2.61}; // RML Ellie w/aero tail
+const float motZeros[9] = {5.200, 5.712, 3.777, 3.853, 2.183, 1.556, .675, 2.679, 2.61}; // RML Ellie w/aero tail
 
 bool isFront(int I){
 	bool isFront;
@@ -125,22 +90,30 @@ public:
 
 
 	uint32_t tLast; // System time @ last velocity sample
+
+	void signal(uint32_t sig) {
+		if (sig == 3) {
+		}
+	}
 	
 	void begin() {
-		mode = FL_WAIT_AIR; //Start in wait mode
+
+
+
+		mode = FL_WAIT_AIR;//Start in wait mode
 		prevTime = S->millis;// Set tLast at onset 
 		C->mode = RobotCommand_Mode_JOINT;
-		P->joints[8].type = JointParams_Type_GRBL;
 
+		
 
 // Set the *physical* address (e.g. etherCAT ID, PWM port, dynamixel ID, etc.)
-		P->joints[8].zero = 2.61;
-		P->joints[8].direction = 1;
-		P->joints[8].address = 8;
+		
 
-		P->joints[8].gearRatio = 1.0;
-
-		P->limbs_count = 0;
+		
+		for(int i = 0; i < 8; i++){
+			joint[i].setGain(.8,.006);
+			joint[i].setPosition(2.5);
+		}
 	}
 
 	//sig is mapped from remote; here, 3 corresponds to pushing the left stick to the right
@@ -166,43 +139,28 @@ public:
 		
 		
 			for(int i = 0; i < 8; i++){
-				joint[i].setGain(.03,.006);
+				// hold legs in start position
+				joint[i].setGain(.8,.006);
+				joint[i].setPosition(2.5);
 			}
 			joint[8].setGain(.2,.006);
-			
+			joint[8].setPosition(0);
 
-			for (int i = 0; i < 8; ++i) {
-				update_pos(cur_pos[i],joint[i].getPosition());
-				if (!crouched[i]) {
-					if (avg(cur_pos[i]) - avg(last_pos[i]) > 0.05) {
-						hold_pos[i] = avg(last_pos[i]);
-						joint[i].setPosition(hold_pos[i]);
-						//joint[i].setGain(.2, .005);
-						crouched[i] = true;
-					}
-					else {
-						joint[i].setPosition(2.5);
-					}
-				}
-				else {
-					joint[i].setPosition(hold_pos[i]);
-				}
-				counter++;
-				if (counter == 8) {
-					*last_pos[i] = *cur_pos[i];
-					counter = 0;
-				}
+			if(abs(S->imu.linear_acceleration.x) < 4.5 && S->millis - prevTime > 5000){
+				// when released switch to falling
+			//if(S->millis - prevTime > 5000){//} && abs(S->imu.linear_acceleration.z < 6)){
+				mode = FL_Falling;
+				prevTime = S->millis;
 			}
 		}
 		else if(mode == (FL_Falling)){
 			fallTime = (S->millis - prevTime);
 
-			
+			// flick the tail if it hasn't reahed end of travel
 			if(joint[8].getPosition() < 2.9 && joint[8].getPosition() > -1){
 				joint[8].setOpenLoop(-1);
 			}	
 			else{
-
 				joint[8].setPosition(3.14159);
 			}
 			
@@ -212,29 +170,36 @@ public:
 			if(abs(angle < 1.2)){
 				for (int i = 0; i < 8; ++i)
 				{
-					//angDes = (isFront(i)) ? S->imu.euler.y - 0.1 : S->imu.euler.y + .1; // from first hop
-				
-					last_pos[i]  = joint[i].getPosition();
-					joint[i].setGain(.8, .006);
-					
 					joint[i].setPosition(3.14+isOut(i)*angle-.5);
-					
-					
 				}
 
 			}
-			if(fallTime > 50){//abs(S->imu.linear_acceleration.z) > 1){
+			if(abs(angle) < .3 || S->millis-prevTime > 5000){//abs(S->imu.linear_acceleration.z) > 1){
+				// when legs pointed down start preparing to land
 				mode = FL_Landing;
-				prevTime = S->millis;
-						
+				prevTime = S->millis;		
 			}
 			
 		}
 		else if(mode == FL_Landing){
 
-			joint[8].setPosition(3.14);
+			joint[8].setPosition(0);
 			
-			
+			for (int i = 0; i < 8; ++i){
+				// legs "ratchet" such that they can resist collaps but not extend
+				cur_pos[i] = joint[i].getPosition();
+				if(cur_pos[i] < hold_pos[i]){
+					hold_pos[i] -= .015;//cur_pos[i];
+					joint[i].setPosition(hold_pos[i]);
+					//joint[i].setGain(.2,.005);
+					crouched[i] = true;
+
+				}
+				else{
+					joint[i].setPosition(hold_pos[i]);
+				}
+				last_pos[i] = cur_pos[i];
+			}	
 
 		}
 		else if(mode == FL_WAIT_GND){
@@ -249,6 +214,7 @@ public:
 	}
 
 	void end() {
+		P->limbs_count = 4; 
 	}
 };
 
@@ -267,9 +233,9 @@ int main(int argc, char *argv[]) {
 	#endif
 
 	// Configure joints
-	#define NUM_MOTORS 9
+	#define NUM_MOTORS  9
 	//const float zeros[NUM_MOTORS] = {0, 0, 0, 0, 0, 0, 0, 0};
-	const float directions[NUM_MOTORS] = {1, 1, 1, 1, -1, -1, -1, -1, 1};
+	float directions[NUM_MOTORS] = {1, 1, 1, 1, -1, -1, -1, -1, 1};
 	P->joints_count = S->joints_count = C->joints_count = NUM_MOTORS;
 	for (int i = 0; i < P->joints_count; i++)
 	{
@@ -282,7 +248,7 @@ int main(int argc, char *argv[]) {
 	//P->joints[9].type = JointParams_Type_GRBL;
 
 // Set the *physical* address (e.g. etherCAT ID, PWM port, dynamixel ID, etc.)
-	P->joints[8].address = 8;
+	P->joints[8].address = 9;
 	//P->joints[9].address = 9;
 
 // If there is a gearbox the joint electronics doesn't know about, this could be > 1.
